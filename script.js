@@ -29,7 +29,6 @@ chaserImages.nael.src = "4_20260825_165035_0002.png";
 ===================================================== */
 
 let playerName = "";
-
 let level = 1;
 let score = 0;
 let lives = 3;
@@ -68,51 +67,51 @@ const levelSettings = {
 
   1: {
     chasers: 1,
-    chaserSpeed: 420,
-    playerSpeed: 140,
+    playerSpeed: 150,
+    chaserSpeed: 520,
     note: "Val is coming... RUN! 👀"
   },
 
   2: {
     chasers: 2,
-    chaserSpeed: 380,
-    playerSpeed: 135,
+    playerSpeed: 145,
+    chaserSpeed: 470,
     note: "Taka joined the chase! 😭"
   },
 
   3: {
     chasers: 3,
-    chaserSpeed: 350,
-    playerSpeed: 130,
+    playerSpeed: 140,
+    chaserSpeed: 440,
     note: "THREE OF THEM?! 💀"
   },
 
   4: {
     chasers: 3,
-    chaserSpeed: 330,
-    playerSpeed: 130,
+    playerSpeed: 140,
+    chaserSpeed: 420,
     mines: true,
     note: "WATCH OUT FOR MINES! 💣"
   },
 
   5: {
     chasers: 1,
-    chaserSpeed: 170,
-    playerSpeed: 120,
+    playerSpeed: 130,
+    chaserSpeed: 180,
     note: "Only one... BUT VERY FAST! ⚡"
   },
 
   6: {
     chasers: 2,
-    chaserSpeed: 155,
-    playerSpeed: 115,
+    playerSpeed: 125,
+    chaserSpeed: 165,
     note: "They're getting faster! 🏃💨"
   },
 
   7: {
     chasers: 3,
-    chaserSpeed: 140,
-    playerSpeed: 110,
+    playerSpeed: 120,
+    chaserSpeed: 150,
     note: "FINAL LEVEL. GOOD LUCK. 💀"
   }
 
@@ -125,19 +124,12 @@ const levelSettings = {
 
 function getName() {
 
-  const input =
-    document.getElementById("playerName");
-
-  const name =
-    input.value.trim();
+  const input = document.getElementById("playerName");
+  const name = input.value.trim();
 
   if (!name) {
-
     input.focus();
-
-    input.placeholder =
-      "Nama dulu dong 😭";
-
+    input.placeholder = "Nama dulu dong 😭";
     return false;
   }
 
@@ -170,142 +162,88 @@ function createMaze() {
 
     for (let x = 0; x < SIZE; x++) {
 
-      if (
+      maze[y][x] =
         x === 0 ||
         y === 0 ||
         x === SIZE - 1 ||
         y === SIZE - 1
-      ) {
-
-        maze[y][x] = 1;
-
-      } else {
-
-        maze[y][x] = 0;
-
-      }
+          ? 1
+          : 0;
 
     }
-
   }
 
 
   const walls = [
 
-    // Upper vertical walls
-    [3, 2],
-    [3, 3],
-    [3, 4],
-    [3, 5],
-    [3, 6],
+    [3,2],[3,3],[3,4],[3,5],[3,6],
 
-    [7, 2],
-    [7, 3],
-    [7, 4],
-    [7, 5],
+    [7,2],[7,3],[7,4],[7,5],
 
-    [11, 2],
-    [11, 3],
-    [11, 4],
-    [11, 5],
+    [11,2],[11,3],[11,4],[11,5],
 
-    // Middle
-    [5, 8],
-    [6, 8],
-    [7, 8],
-    [8, 8],
-    [9, 8],
+    [5,8],[6,8],[7,8],[8,8],[9,8],
 
-    // Lower
-    [3, 11],
-    [4, 11],
-    [5, 11],
+    [3,11],[4,11],[5,11],
 
-    [9, 11],
-    [10, 11],
-    [11, 11],
+    [9,11],[10,11],[11,11],
 
-    [7, 12]
+    [7,12]
 
   ];
 
 
   if (level >= 2) {
-
     walls.push(
-      [2, 9],
-      [2, 10],
-      [12, 9],
-      [12, 10]
+      [2,9],[2,10],
+      [12,9],[12,10]
     );
-
   }
 
 
   if (level >= 3) {
-
     walls.push(
-      [6, 3],
-      [6, 4],
-      [8, 3],
-      [8, 4]
+      [6,3],[6,4],
+      [8,3],[8,4]
     );
-
   }
 
 
   if (level >= 5) {
-
     walls.push(
-      [4, 6],
-      [5, 6],
-      [9, 6],
-      [10, 6]
+      [4,6],[5,6],
+      [9,6],[10,6]
     );
-
   }
 
 
   if (level >= 6) {
-
     walls.push(
-      [2, 5],
-      [12, 5],
-      [2, 12],
-      [12, 12]
+      [2,5],[12,5],
+      [2,12],[12,12]
     );
-
   }
 
 
   if (level >= 7) {
-
     walls.push(
-      [5, 2],
-      [5, 3],
-      [9, 2],
-      [9, 3],
-
-      [5, 13],
-      [9, 13]
+      [5,2],[5,3],
+      [9,2],[9,3],
+      [5,13],[9,13]
     );
-
   }
 
 
   for (const [x, y] of walls) {
-
     maze[y][x] = 1;
-
   }
 
 
-  // Starting area must stay open
+  // Starting area
 
   maze[1][1] = 0;
   maze[1][2] = 0;
   maze[2][1] = 0;
-
 }
 
 
@@ -321,9 +259,7 @@ function isWall(x, y) {
     x >= SIZE ||
     y >= SIZE
   ) {
-
     return true;
-
   }
 
   return maze[y][x] === 1;
@@ -342,108 +278,53 @@ function createPellets() {
 
     for (let x = 1; x < SIZE - 1; x++) {
 
-      if (maze[y][x] === 1) {
-        continue;
-      }
+      if (maze[y][x] === 1) continue;
 
-
-      // Don't put pellet on player start
+      if (x === 1 && y === 1) continue;
 
       if (
-        x === 1 &&
-        y === 1
+        (x === 13 && y === 13) ||
+        (x === 13 && y === 1) ||
+        (x === 1 && y === 13)
       ) {
         continue;
       }
 
-
-      // Don't put pellet on chaser starts
-
-      const chaserStart =
-        (
-          (x === 13 && y === 13) ||
-          (x === 13 && y === 1) ||
-          (x === 1 && y === 13)
-        );
-
-      if (chaserStart) {
-        continue;
-      }
-
-
-      pellets.push({
-        x,
-        y
-      });
-
+      pellets.push({ x, y });
     }
-
   }
-
 }
 
 
 /* =====================================================
-   MINES — LEVEL 4
+   MINES
 ===================================================== */
 
 function createMines() {
 
   mines = [];
 
-  if (level !== 4) {
-    return;
-  }
+  if (level !== 4) return;
 
+  const spots = [...pellets];
 
-  const possible =
-    [...pellets];
+  spots.sort(() => Math.random() - 0.5);
 
+  for (const spot of spots) {
 
-  possible.sort(
-    () => Math.random() - 0.5
-  );
-
-
-  let placed = 0;
-
-
-  for (
-    const spot of possible
-  ) {
-
-    if (placed >= 8) {
-      break;
-    }
-
+    if (mines.length >= 8) break;
 
     const distance =
-      Math.abs(
-        spot.x - player.x
-      ) +
-      Math.abs(
-        spot.y - player.y
-      );
+      Math.abs(spot.x - player.x) +
+      Math.abs(spot.y - player.y);
 
-
-    // Don't put mines too close
-    // to the starting point
-
-    if (distance <= 3) {
-      continue;
-    }
-
+    if (distance <= 3) continue;
 
     mines.push({
       x: spot.x,
       y: spot.y
     });
-
-
-    placed++;
-
   }
-
 }
 
 
@@ -455,8 +336,7 @@ function createChasers() {
 
   chasers = [];
 
-
-  const startingPositions = [
+  const starts = [
 
     {
       x: 13,
@@ -483,30 +363,15 @@ function createChasers() {
     levelSettings[level].chasers;
 
 
-  for (
-    let i = 0;
-    i < amount;
-    i++
-  ) {
-
-    const data =
-      startingPositions[i];
-
+  for (let i = 0; i < amount; i++) {
 
     chasers.push({
-
-      name: data.name,
-
-      x: data.x,
-      y: data.y,
-
-      image:
-        chaserImages[data.name]
-
+      x: starts[i].x,
+      y: starts[i].y,
+      name: starts[i].name,
+      image: chaserImages[starts[i].name]
     });
-
   }
-
 }
 
 
@@ -518,33 +383,27 @@ function startLevel() {
 
   createMaze();
 
-
   player.x = 1;
   player.y = 1;
 
   player.direction = "right";
   player.wantedDirection = "right";
 
-
   createPellets();
-
   createMines();
-
   createChasers();
-
 
   playerTimer = 0;
   chaserTimer = 0;
 
-
   updateHUD();
-
 
   document.getElementById(
     "levelNote"
   ).textContent =
     levelSettings[level].note;
 
+  draw();
 }
 
 
@@ -554,14 +413,20 @@ function startLevel() {
 
 function setDirection(direction) {
 
-  player.wantedDirection =
-    direction;
+  /*
+    We DON'T immediately move the player.
 
+    We simply remember the direction.
+    When the path opens, the character
+    automatically turns.
+  */
+
+  player.wantedDirection = direction;
 }
 
 
 /* =====================================================
-   GET NEXT POSITION
+   NEXT POSITION
 ===================================================== */
 
 function getNextPosition(
@@ -573,29 +438,15 @@ function getNextPosition(
   let nx = x;
   let ny = y;
 
-
-  if (direction === "up") {
-    ny--;
-  }
-
-  if (direction === "down") {
-    ny++;
-  }
-
-  if (direction === "left") {
-    nx--;
-  }
-
-  if (direction === "right") {
-    nx++;
-  }
-
+  if (direction === "up") ny--;
+  if (direction === "down") ny++;
+  if (direction === "left") nx--;
+  if (direction === "right") nx++;
 
   return {
     x: nx,
     y: ny
   };
-
 }
 
 
@@ -606,14 +457,8 @@ function getNextPosition(
 function movePlayer() {
 
   /*
-    FIRST:
-    Try the direction the player
-    most recently swiped.
-
-    This means the player can swipe
-    BEFORE reaching a corner and the
-    character will turn automatically
-    when the path opens.
+    Try the direction requested
+    by the latest swipe.
   */
 
   const wanted =
@@ -633,14 +478,11 @@ function movePlayer() {
 
     player.direction =
       player.wantedDirection;
-
   }
 
 
   /*
-    THEN:
-    Continue moving in the current
-    direction.
+    Continue moving automatically.
   */
 
   const next =
@@ -658,26 +500,20 @@ function movePlayer() {
     )
   ) {
 
-    player.x =
-      next.x;
-
-    player.y =
-      next.y;
+    player.x = next.x;
+    player.y = next.y;
 
   }
 
 
   collectPellet();
-
   checkMine();
-
   checkChaserCollision();
-
 }
 
 
 /* =====================================================
-   COLLECT PELLET
+   PELLET
 ===================================================== */
 
 function collectPellet() {
@@ -692,16 +528,11 @@ function collectPellet() {
 
   if (index !== -1) {
 
-    pellets.splice(
-      index,
-      1
-    );
-
+    pellets.splice(index, 1);
 
     score += 10;
 
     updateHUD();
-
   }
 
 
@@ -711,9 +542,7 @@ function collectPellet() {
   ) {
 
     nextLevel();
-
   }
-
 }
 
 
@@ -723,10 +552,7 @@ function collectPellet() {
 
 function checkMine() {
 
-  if (!gameRunning) {
-    return;
-  }
-
+  if (!gameRunning) return;
 
   const mine =
     mines.find(
@@ -736,10 +562,7 @@ function checkMine() {
     );
 
 
-  if (!mine) {
-    return;
-  }
-
+  if (!mine) return;
 
   mines =
     mines.filter(
@@ -752,77 +575,41 @@ function checkMine() {
 
 
   loseLife("mine");
-
-}
-
-
-/* =====================================================
-   CHASER VALID MOVES
-===================================================== */
-
-function getValidMoves(x, y) {
-
-  const directions = [
-
-    {
-      x: 0,
-      y: -1
-    },
-
-    {
-      x: 0,
-      y: 1
-    },
-
-    {
-      x: -1,
-      y: 0
-    },
-
-    {
-      x: 1,
-      y: 0
-    }
-
-  ];
-
-
-  const moves = [];
-
-
-  for (
-    const direction of directions
-  ) {
-
-    const nx =
-      x + direction.x;
-
-    const ny =
-      y + direction.y;
-
-
-    if (
-      !isWall(nx, ny)
-    ) {
-
-      moves.push({
-        x: nx,
-        y: ny
-      });
-
-    }
-
-  }
-
-
-  return moves;
-
 }
 
 
 /* =====================================================
    CHASER MOVEMENT
 ===================================================== */
+
+function getValidMoves(x, y) {
+
+  const directions = [
+
+    { x: 0, y: -1 },
+    { x: 0, y: 1 },
+    { x: -1, y: 0 },
+    { x: 1, y: 0 }
+
+  ];
+
+
+  return directions
+
+    .map(direction => ({
+      x: x + direction.x,
+      y: y + direction.y
+    }))
+
+    .filter(
+      position =>
+        !isWall(
+          position.x,
+          position.y
+        )
+    );
+}
+
 
 function moveChaser(chaser) {
 
@@ -833,81 +620,49 @@ function moveChaser(chaser) {
     );
 
 
-  if (
-    moves.length === 0
-  ) {
-    return;
-  }
+  if (!moves.length) return;
 
 
-  /*
-    Mostly chase the player,
-    sometimes make a random move
-    so they don't feel TOO perfect.
-  */
+  moves.sort((a, b) => {
 
-  moves.sort(
-    (a, b) => {
+    const distanceA =
+      Math.abs(a.x - player.x) +
+      Math.abs(a.y - player.y);
 
-      const distanceA =
-        Math.abs(
-          a.x - player.x
-        ) +
-        Math.abs(
-          a.y - player.y
-        );
+    const distanceB =
+      Math.abs(b.x - player.x) +
+      Math.abs(b.y - player.y);
 
-
-      const distanceB =
-        Math.abs(
-          b.x - player.x
-        ) +
-        Math.abs(
-          b.y - player.y
-        );
-
-
-      return (
-        distanceA -
-        distanceB
-      );
-
-    }
-  );
+    return distanceA - distanceB;
+  });
 
 
   let chosen;
 
+  /*
+    15% chance of a random move.
+    Otherwise chase the player.
+  */
 
-  if (
-    Math.random() < 0.15
-  ) {
+  if (Math.random() < 0.15) {
 
     chosen =
       moves[
         Math.floor(
-          Math.random() *
-          moves.length
+          Math.random() * moves.length
         )
       ];
 
   } else {
 
-    chosen =
-      moves[0];
-
+    chosen = moves[0];
   }
 
 
-  chaser.x =
-    chosen.x;
-
-  chaser.y =
-    chosen.y;
-
+  chaser.x = chosen.x;
+  chaser.y = chosen.y;
 
   checkChaserCollision();
-
 }
 
 
@@ -917,30 +672,21 @@ function moveChaser(chaser) {
 
 function checkChaserCollision() {
 
-  if (!gameRunning) {
-    return;
-  }
+  if (!gameRunning) return;
 
 
-  for (
-    const chaser of chasers
-  ) {
+  for (const chaser of chasers) {
 
     if (
       chaser.x === player.x &&
       chaser.y === player.y
     ) {
 
-      loseLife(
-        chaser.name
-      );
+      loseLife(chaser.name);
 
       return;
-
     }
-
   }
-
 }
 
 
@@ -950,33 +696,15 @@ function checkChaserCollision() {
 
 function loseLife(reason) {
 
-  if (!gameRunning) {
-    return;
-  }
-
+  if (!gameRunning) return;
 
   gameRunning = false;
 
   lives--;
 
-
-  if (reason === "mine") {
-
-    showDeathPopup(
-      "mine"
-    );
-
-  } else {
-
-    showDeathPopup(
-      reason
-    );
-
-  }
-
-
   updateHUD();
 
+  showDeathPopup(reason);
 }
 
 
@@ -985,12 +713,6 @@ function loseLife(reason) {
 ===================================================== */
 
 function showDeathPopup(reason) {
-
-  const overlay =
-    document.getElementById(
-      "deathOverlay"
-    );
-
 
   const message =
     document.getElementById(
@@ -1007,20 +729,17 @@ function showDeathPopup(reason) {
 
     message.textContent =
       `Kamu gagal melarikan diri dan digigit ${capitalize(reason)}! 😭`;
-
   }
 
 
   document.getElementById(
     "finalScore"
-  ).textContent =
-    score;
+  ).textContent = score;
 
 
   document.getElementById(
     "finalLevel"
-  ).textContent =
-    level;
+  ).textContent = level;
 
 
   const againBtn =
@@ -1029,37 +748,27 @@ function showDeathPopup(reason) {
     );
 
 
-  if (lives > 0) {
-
-    againBtn.textContent =
-      `LANJUT LARI (${lives} ❤️)`;
-
-  } else {
-
-    againBtn.textContent =
-      "COBA LAGI ✦";
-
-  }
+  againBtn.textContent =
+    lives > 0
+      ? `LANJUT LARI (${lives} ❤️)`
+      : "COBA LAGI ✦";
 
 
-  overlay.classList.remove(
-    "hidden"
-  );
-
+  document
+    .getElementById("deathOverlay")
+    .classList.remove("hidden");
 }
 
 
 /* =====================================================
-   CONTINUE AFTER DEATH
+   CONTINUE
 ===================================================== */
 
 function continueGame() {
 
-  document.getElementById(
-    "deathOverlay"
-  ).classList.add(
-    "hidden"
-  );
+  document
+    .getElementById("deathOverlay")
+    .classList.add("hidden");
 
 
   if (lives <= 0) {
@@ -1067,14 +776,12 @@ function continueGame() {
     endGame();
 
     return;
-
   }
 
 
   /*
-    Respawn player at the start.
-    The score and collected pellets
-    stay the same.
+    Respawn.
+    Score and remaining pellets stay.
   */
 
   player.x = 1;
@@ -1083,20 +790,13 @@ function continueGame() {
   player.direction = "right";
   player.wantedDirection = "right";
 
-
   createChasers();
-
 
   gameRunning = true;
 
-  lastTime =
-    performance.now();
+  lastTime = performance.now();
 
-
-  requestAnimationFrame(
-    gameLoop
-  );
-
+  requestAnimationFrame(gameLoop);
 }
 
 
@@ -1106,10 +806,7 @@ function continueGame() {
 
 function nextLevel() {
 
-  if (levelChanging) {
-    return;
-  }
-
+  if (levelChanging) return;
 
   levelChanging = true;
 
@@ -1119,7 +816,6 @@ function nextLevel() {
     winGame();
 
     return;
-
   }
 
 
@@ -1127,91 +823,9 @@ function nextLevel() {
 
   score += 100;
 
-
   startLevel();
 
-
   levelChanging = false;
-
-}
-
-
-/* =====================================================
-   WIN GAME
-===================================================== */
-
-function winGame() {
-
-  gameRunning = false;
-
-  score += 500;
-
-
-  saveRank();
-
-
-  document.getElementById(
-    "gameScreen"
-  ).classList.add(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "winOverlay"
-  ).classList.remove(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "winScore"
-  ).textContent =
-    score;
-
-
-  document.getElementById(
-    "winRank"
-  ).textContent =
-    getRank(score);
-
-}
-
-
-/* =====================================================
-   END GAME
-===================================================== */
-
-function endGame() {
-
-  gameRunning = false;
-
-  saveRank();
-
-
-  document.getElementById(
-    "deathOverlay"
-  ).classList.add(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "gameScreen"
-  ).classList.add(
-    "hidden"
-  );
-
-
-  document.getElementById(
-    "homeScreen"
-  ).classList.remove(
-    "hidden"
-  );
-
-
-  displayRanks();
-
 }
 
 
@@ -1223,31 +837,25 @@ function updateHUD() {
 
   document.getElementById(
     "levelText"
-  ).textContent =
-    level;
+  ).textContent = level;
 
 
   document.getElementById(
     "scoreText"
-  ).textContent =
-    score;
+  ).textContent = score;
 
 
   document.getElementById(
     "livesText"
   ).textContent =
     "❤️".repeat(
-      Math.max(
-        0,
-        lives
-      )
+      Math.max(0, lives)
     );
-
 }
 
 
 /* =====================================================
-   DRAW GAME
+   DRAW
 ===================================================== */
 
 function draw() {
@@ -1264,8 +872,7 @@ function draw() {
     Background
   */
 
-  ctx.fillStyle =
-    "#F2CFBB";
+  ctx.fillStyle = "#F2CFBB";
 
   ctx.fillRect(
     0,
@@ -1276,34 +883,18 @@ function draw() {
 
 
   /*
-    Maze walls
+    Walls
   */
 
-  for (
-    let y = 0;
-    y < SIZE;
-    y++
-  ) {
+  for (let y = 0; y < SIZE; y++) {
 
-    for (
-      let x = 0;
-      x < SIZE;
-      x++
-    ) {
+    for (let x = 0; x < SIZE; x++) {
 
-      if (
-        maze[y][x] !== 1
-      ) {
-        continue;
-      }
+      if (maze[y][x] !== 1) continue;
 
-
-      ctx.fillStyle =
-        "#8E9546";
-
+      ctx.fillStyle = "#8E9546";
 
       ctx.beginPath();
-
 
       ctx.roundRect(
         x * TILE + 3,
@@ -1313,11 +904,8 @@ function draw() {
         9
       );
 
-
       ctx.fill();
-
     }
-
   }
 
 
@@ -1325,34 +913,21 @@ function draw() {
     Pellets
   */
 
-  ctx.fillStyle =
-    "#E9E29B";
+  ctx.fillStyle = "#E9E29B";
 
-
-  for (
-    const pellet of pellets
-  ) {
+  for (const pellet of pellets) {
 
     ctx.beginPath();
 
-
     ctx.arc(
-      pellet.x * TILE +
-        TILE / 2,
-
-      pellet.y * TILE +
-        TILE / 2,
-
+      pellet.x * TILE + TILE / 2,
+      pellet.y * TILE + TILE / 2,
       5,
-
       0,
-
       Math.PI * 2
     );
 
-
     ctx.fill();
-
   }
 
 
@@ -1360,30 +935,17 @@ function draw() {
     Mines
   */
 
-  for (
-    const mine of mines
-  ) {
+  for (const mine of mines) {
 
-    ctx.font =
-      "22px Arial";
-
-    ctx.textAlign =
-      "center";
-
-    ctx.textBaseline =
-      "middle";
-
+    ctx.font = "22px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
     ctx.fillText(
       "💣",
-
-      mine.x * TILE +
-        TILE / 2,
-
-      mine.y * TILE +
-        TILE / 2
+      mine.x * TILE + TILE / 2,
+      mine.y * TILE + TILE / 2
     );
-
   }
 
 
@@ -1391,9 +953,7 @@ function draw() {
     Chasers
   */
 
-  for (
-    const chaser of chasers
-  ) {
+  for (const chaser of chasers) {
 
     drawCharacter(
       chaser.image,
@@ -1401,7 +961,6 @@ function draw() {
       chaser.y,
       34
     );
-
   }
 
 
@@ -1415,7 +974,6 @@ function draw() {
     player.y,
     36
   );
-
 }
 
 
@@ -1447,44 +1005,25 @@ function drawCharacter(
 
       size,
       size
-
     );
 
     return;
-
   }
 
 
-  /*
-    Fallback if image isn't loaded yet.
-  */
-
-  ctx.fillStyle =
-    "#F28892";
-
+  ctx.fillStyle = "#F28892";
 
   ctx.beginPath();
 
-
   ctx.arc(
-
-    x * TILE +
-      TILE / 2,
-
-    y * TILE +
-      TILE / 2,
-
+    x * TILE + TILE / 2,
+    y * TILE + TILE / 2,
     size / 2,
-
     0,
-
     Math.PI * 2
-
   );
 
-
   ctx.fill();
-
 }
 
 
@@ -1494,87 +1033,57 @@ function drawCharacter(
 
 function gameLoop(timestamp) {
 
-  if (!gameRunning) {
-    return;
-  }
+  if (!gameRunning) return;
 
 
   const delta =
     timestamp - lastTime;
 
-
-  lastTime =
-    timestamp;
+  lastTime = timestamp;
 
 
-  playerTimer +=
-    delta;
-
-  chaserTimer +=
-    delta;
+  playerTimer += delta;
+  chaserTimer += delta;
 
 
   /*
-    PLAYER
+    Player movement
   */
 
-  const playerSpeed =
-    levelSettings[level]
-      .playerSpeed;
-
-
   if (
-    playerTimer >= playerSpeed
+    playerTimer >=
+    levelSettings[level].playerSpeed
   ) {
 
     movePlayer();
 
     playerTimer = 0;
-
   }
 
 
   /*
-    CHASERS
+    Chaser movement
   */
 
-  const chaserSpeed =
-    levelSettings[level]
-      .chaserSpeed;
-
-
   if (
-    chaserTimer >= chaserSpeed
+    chaserTimer >=
+    levelSettings[level].chaserSpeed
   ) {
 
-    for (
-      const chaser of chasers
-    ) {
+    for (const chaser of chasers) {
 
-      moveChaser(
-        chaser
-      );
+      moveChaser(chaser);
 
-
-      if (!gameRunning) {
-        break;
-      }
-
+      if (!gameRunning) break;
     }
 
-
     chaserTimer = 0;
-
   }
 
 
   draw();
 
-
-  requestAnimationFrame(
-    gameLoop
-  );
-
+  requestAnimationFrame(gameLoop);
 }
 
 
@@ -1589,61 +1098,109 @@ function startGame() {
   lives = 3;
 
   levelChanging = false;
-
   gameRunning = true;
 
 
-  document.getElementById(
-    "nameScreen"
-  ).classList.add(
-    "hidden"
-  );
+  document
+    .getElementById("nameScreen")
+    .classList.add("hidden");
 
 
-  document.getElementById(
-    "homeScreen"
-  ).classList.add(
-    "hidden"
-  );
+  document
+    .getElementById("homeScreen")
+    .classList.add("hidden");
 
 
-  document.getElementById(
-    "gameScreen"
-  ).classList.remove(
-    "hidden"
-  );
+  document
+    .getElementById("gameScreen")
+    .classList.remove("hidden");
 
 
-  document.getElementById(
-    "deathOverlay"
-  ).classList.add(
-    "hidden"
-  );
+  document
+    .getElementById("deathOverlay")
+    .classList.add("hidden");
 
 
-  document.getElementById(
-    "winOverlay"
-  ).classList.add(
-    "hidden"
-  );
+  document
+    .getElementById("winOverlay")
+    .classList.add("hidden");
 
 
   startLevel();
 
+  lastTime = performance.now();
 
-  lastTime =
-    performance.now();
-
-
-  requestAnimationFrame(
-    gameLoop
-  );
-
+  requestAnimationFrame(gameLoop);
 }
 
 
 /* =====================================================
-   RANK SYSTEM
+   END GAME
+===================================================== */
+
+function endGame() {
+
+  gameRunning = false;
+
+  saveRank();
+
+
+  document
+    .getElementById("deathOverlay")
+    .classList.add("hidden");
+
+
+  document
+    .getElementById("gameScreen")
+    .classList.add("hidden");
+
+
+  document
+    .getElementById("homeScreen")
+    .classList.remove("hidden");
+
+
+  displayRanks();
+}
+
+
+/* =====================================================
+   WIN
+===================================================== */
+
+function winGame() {
+
+  gameRunning = false;
+
+  score += 500;
+
+  saveRank();
+
+
+  document
+    .getElementById("gameScreen")
+    .classList.add("hidden");
+
+
+  document
+    .getElementById("winOverlay")
+    .classList.remove("hidden");
+
+
+  document.getElementById(
+    "winScore"
+  ).textContent = score;
+
+
+  document.getElementById(
+    "winRank"
+  ).textContent =
+    getRank(score);
+}
+
+
+/* =====================================================
+   RANK
 ===================================================== */
 
 function getRanks() {
@@ -1653,24 +1210,16 @@ function getRanks() {
       "lskdRanks"
     ) || "[]"
   );
-
 }
 
 
 function saveRank() {
 
-  const ranks =
-    getRanks();
-
+  const ranks = getRanks();
 
   ranks.push({
-
-    name:
-      playerName,
-
-    score:
-      score
-
+    name: playerName,
+    score: score
   });
 
 
@@ -1681,48 +1230,33 @@ function saveRank() {
 
 
   localStorage.setItem(
-
     "lskdRanks",
-
     JSON.stringify(
       ranks.slice(0, 5)
     )
-
   );
 
 
   displayRanks();
-
 }
 
 
 function getRank(currentScore) {
 
-  const ranks =
-    getRanks();
-
+  const ranks = getRanks();
 
   let position = 1;
 
-
-  for (
-    const rank of ranks
-  ) {
+  for (const rank of ranks) {
 
     if (
-      currentScore <
-      rank.score
+      currentScore < rank.score
     ) {
-
       position++;
-
     }
-
   }
 
-
   return "#" + position;
-
 }
 
 
@@ -1734,35 +1268,22 @@ function displayRanks() {
     );
 
 
-  if (!rankList) {
-    return;
-  }
+  if (!rankList) return;
 
 
-  const ranks =
-    getRanks();
+  const ranks = getRanks();
 
 
-  if (
-    ranks.length === 0
-  ) {
+  if (!ranks.length) {
 
     rankList.innerHTML = `
-
       <div class="rank-row">
-
-        <span>
-          🥇 Belum ada yang lari
-        </span>
-
+        <span>🥇 Belum ada yang lari</span>
         <span>—</span>
-
       </div>
-
     `;
 
     return;
-
   }
 
 
@@ -1779,9 +1300,7 @@ function displayRanks() {
     ranks
       .map(
         (rank, index) => `
-
           <div class="rank-row">
-
             <span>
               ${medals[index]}
               ${escapeHTML(rank.name)}
@@ -1790,53 +1309,46 @@ function displayRanks() {
             <strong>
               ${rank.score}
             </strong>
-
           </div>
-
         `
       )
       .join("");
-
 }
 
 
 /* =====================================================
-   SWIPE CONTROLS
+   MOBILE SWIPE — POINTER EVENTS
 ===================================================== */
 
-let touchStartX = 0;
-let touchStartY = 0;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let pointerActive = false;
 
 
 gameArea.addEventListener(
-  "touchstart",
+  "pointerdown",
   event => {
 
-    const touch =
-      event.touches[0];
+    if (!gameRunning) return;
+
+    pointerActive = true;
+
+    swipeStartX =
+      event.clientX;
+
+    swipeStartY =
+      event.clientY;
 
 
-    touchStartX =
-      touch.clientX;
+    if (
+      gameArea.setPointerCapture
+    ) {
 
-    touchStartY =
-      touch.clientY;
+      gameArea.setPointerCapture(
+        event.pointerId
+      );
+    }
 
-  },
-  {
-    passive: true
-  }
-);
-
-
-gameArea.addEventListener(
-  "touchmove",
-  event => {
-
-    /*
-      Prevent the page from scrolling
-      while playing.
-    */
 
     event.preventDefault();
 
@@ -1848,21 +1360,36 @@ gameArea.addEventListener(
 
 
 gameArea.addEventListener(
-  "touchend",
+  "pointermove",
   event => {
 
-    const touch =
-      event.changedTouches[0];
+    if (!pointerActive) return;
+
+    event.preventDefault();
+
+  },
+  {
+    passive: false
+  }
+);
+
+
+gameArea.addEventListener(
+  "pointerup",
+  event => {
+
+    if (!pointerActive) return;
+
+    pointerActive = false;
 
 
     const dx =
-      touch.clientX -
-      touchStartX;
-
+      event.clientX -
+      swipeStartX;
 
     const dy =
-      touch.clientY -
-      touchStartY;
+      event.clientY -
+      swipeStartY;
 
 
     const distance =
@@ -1872,72 +1399,50 @@ gameArea.addEventListener(
       );
 
 
-    /*
-      Ignore tiny taps.
-    */
-
-    if (
-      distance < 25
-    ) {
+    if (distance < 25) {
       return;
     }
 
-
-    /*
-      Horizontal swipe
-    */
 
     if (
       Math.abs(dx) >
       Math.abs(dy)
     ) {
 
-      if (dx > 0) {
-
-        setDirection(
-          "right"
-        );
-
-      } else {
-
-        setDirection(
-          "left"
-        );
-
-      }
-
-      return;
-
-    }
-
-
-    /*
-      Vertical swipe
-    */
-
-    if (dy > 0) {
-
       setDirection(
-        "down"
+        dx > 0
+          ? "right"
+          : "left"
       );
 
     } else {
 
       setDirection(
-        "up"
+        dy > 0
+          ? "down"
+          : "up"
       );
-
     }
 
   },
   {
-    passive: true
+    passive: false
+  }
+);
+
+
+gameArea.addEventListener(
+  "pointercancel",
+  () => {
+
+    pointerActive = false;
+
   }
 );
 
 
 /* =====================================================
-   KEYBOARD CONTROLS
+   KEYBOARD
 ===================================================== */
 
 document.addEventListener(
@@ -1972,13 +1477,10 @@ document.addEventListener(
 
       event.preventDefault();
 
-
       setDirection(
         directions[event.key]
       );
-
     }
-
   }
 );
 
@@ -1988,47 +1490,31 @@ document.addEventListener(
 ===================================================== */
 
 document
-  .getElementById(
-    "startBtn"
-  )
+  .getElementById("startBtn")
   .addEventListener(
     "click",
     () => {
 
-      if (
-        getName()
-      ) {
-
-        document
-          .getElementById(
-            "nameScreen"
-          )
-          .classList.add(
-            "hidden"
-          );
+      if (!getName()) return;
 
 
-        document
-          .getElementById(
-            "homeScreen"
-          )
-          .classList.remove(
-            "hidden"
-          );
+      document
+        .getElementById("nameScreen")
+        .classList.add("hidden");
 
 
-        displayRanks();
+      document
+        .getElementById("homeScreen")
+        .classList.remove("hidden");
 
-      }
 
+      displayRanks();
     }
   );
 
 
 document
-  .getElementById(
-    "playBtn"
-  )
+  .getElementById("playBtn")
   .addEventListener(
     "click",
     startGame
@@ -2036,9 +1522,7 @@ document
 
 
 document
-  .getElementById(
-    "againBtn"
-  )
+  .getElementById("againBtn")
   .addEventListener(
     "click",
     continueGame
@@ -2046,9 +1530,7 @@ document
 
 
 document
-  .getElementById(
-    "homeBtn"
-  )
+  .getElementById("homeBtn")
   .addEventListener(
     "click",
     () => {
@@ -2057,42 +1539,27 @@ document
 
 
       document
-        .getElementById(
-          "deathOverlay"
-        )
-        .classList.add(
-          "hidden"
-        );
+        .getElementById("deathOverlay")
+        .classList.add("hidden");
 
 
       document
-        .getElementById(
-          "gameScreen"
-        )
-        .classList.add(
-          "hidden"
-        );
+        .getElementById("gameScreen")
+        .classList.add("hidden");
 
 
       document
-        .getElementById(
-          "homeScreen"
-        )
-        .classList.remove(
-          "hidden"
-        );
+        .getElementById("homeScreen")
+        .classList.remove("hidden");
 
 
       displayRanks();
-
     }
   );
 
 
 document
-  .getElementById(
-    "winAgainBtn"
-  )
+  .getElementById("winAgainBtn")
   .addEventListener(
     "click",
     startGame
@@ -2100,7 +1567,7 @@ document
 
 
 /* =====================================================
-   HELPER
+   HELPERS
 ===================================================== */
 
 function capitalize(text) {
@@ -2109,39 +1576,17 @@ function capitalize(text) {
     text.charAt(0).toUpperCase() +
     text.slice(1)
   );
-
 }
 
 
 function escapeHTML(text) {
 
   return String(text)
-
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-
-    .replace(
-      /</g,
-      "&lt;"
-    )
-
-    .replace(
-      />/g,
-      "&gt;"
-    )
-
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 
@@ -2157,30 +1602,16 @@ const savedName =
 
 if (savedName) {
 
-  playerName =
-    savedName;
+  playerName = savedName;
 
-
-  const input =
-    document.getElementById(
-      "playerName"
-    );
-
-
-  if (input) {
-
-    input.value =
-      savedName;
-
-  }
-
+  document.getElementById(
+    "playerName"
+  ).value = savedName;
 }
 
 
 /* =====================================================
-   INITIAL DISPLAY
+   INITIAL
 ===================================================== */
 
 displayRanks();
-
-draw();
