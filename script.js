@@ -500,35 +500,116 @@ function isWall(x, y) {
 
 function setDirection(direction) {
 
-  player.direction =
-    direction;
-
-
-  let nx =
-    player.x;
-
-  let ny =
-    player.y;
-
-
-  if (direction === "up") ny--;
-
-  if (direction === "down") ny++;
-
-  if (direction === "left") nx--;
-
-  if (direction === "right") nx++;
-
-
-  if (!isWall(nx, ny)) {
-
-    player.nextX = nx;
-    player.nextY = ny;
-
-  }
+  player.direction = direction;
 
 }
 
+
+/* =========================
+   PLAYER MOVEMENT
+========================= */
+
+function movePlayer() {
+
+  let nx = player.x;
+  let ny = player.y;
+
+  if (player.direction === "up") {
+    ny--;
+  }
+
+  if (player.direction === "down") {
+    ny++;
+  }
+
+  if (player.direction === "left") {
+    nx--;
+  }
+
+  if (player.direction === "right") {
+    nx++;
+  }
+
+
+  // Kalau jalan di depan masih terbuka,
+  // lanjut terus ke arah tersebut.
+
+  if (!isWall(nx, ny)) {
+
+    player.x = nx;
+    player.y = ny;
+
+  }
+
+  // Kalau ketemu tembok, berhenti.
+  // Arah tetap tersimpan sehingga
+  // swipe berikutnya bisa langsung belok.
+
+  collectPellet();
+
+  checkMine();
+
+  checkChaserCollision();
+
+}
+/* =========================
+   DIRECTION
+========================= */
+
+function setDirection(direction) {
+
+  player.direction = direction;
+
+}
+
+
+/* =========================
+   PLAYER MOVEMENT
+========================= */
+
+function movePlayer() {
+
+  let nx = player.x;
+  let ny = player.y;
+
+  if (player.direction === "up") {
+    ny--;
+  }
+
+  if (player.direction === "down") {
+    ny++;
+  }
+
+  if (player.direction === "left") {
+    nx--;
+  }
+
+  if (player.direction === "right") {
+    nx++;
+  }
+
+
+  // Kalau jalan di depan masih terbuka,
+  // lanjut terus ke arah tersebut.
+
+  if (!isWall(nx, ny)) {
+
+    player.x = nx;
+    player.y = ny;
+
+  }
+
+  // Kalau ketemu tembok, berhenti.
+  // Arah tetap tersimpan sehingga
+  // swipe berikutnya bisa langsung belok.
+
+  collectPellet();
+
+  checkMine();
+
+  checkChaserCollision();
+
+}
 
 /* =========================
    PLAYER MOVEMENT
