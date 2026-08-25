@@ -1,10 +1,14 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-
 const gameArea = document.getElementById("gameArea");
 
 const TILE = 40;
 const SIZE = 15;
+
+
+/* =====================================================
+   IMAGES
+===================================================== */
 
 const playerImage = new Image();
 playerImage.src = "5_20260825_165035_0003.png";
@@ -20,9 +24,9 @@ chaserImages.taka.src = "3_20260825_165035_0001.png";
 chaserImages.nael.src = "4_20260825_165035_0002.png";
 
 
-/* =========================
-   GAME VARIABLES
-========================= */
+/* =====================================================
+   GAME STATE
+===================================================== */
 
 let playerName = "";
 
@@ -36,90 +40,98 @@ let mines = [];
 let chasers = [];
 
 let gameRunning = false;
+let levelChanging = false;
 
 let lastTime = 0;
 let playerTimer = 0;
 let chaserTimer = 0;
 
-let lastChaserName = "someone";
 
+/* =====================================================
+   PLAYER
+===================================================== */
 
 const player = {
   x: 1,
   y: 1,
 
-  nextX: 1,
-  nextY: 1,
-
-  direction: "right"
+  direction: "right",
+  wantedDirection: "right"
 };
 
 
-/* =========================
+/* =====================================================
    LEVEL SETTINGS
-========================= */
+===================================================== */
 
 const levelSettings = {
 
   1: {
     chasers: 1,
-    speed: 360,
+    chaserSpeed: 420,
+    playerSpeed: 140,
     note: "Val is coming... RUN! 👀"
   },
 
   2: {
     chasers: 2,
-    speed: 320,
+    chaserSpeed: 380,
+    playerSpeed: 135,
     note: "Taka joined the chase! 😭"
   },
 
   3: {
     chasers: 3,
-    speed: 300,
+    chaserSpeed: 350,
+    playerSpeed: 130,
     note: "THREE OF THEM?! 💀"
   },
 
   4: {
     chasers: 3,
-    speed: 285,
+    chaserSpeed: 330,
+    playerSpeed: 130,
     mines: true,
     note: "WATCH OUT FOR MINES! 💣"
   },
 
   5: {
     chasers: 1,
-    speed: 125,
-    note: "Only one... but VERY FAST. ⚡"
+    chaserSpeed: 170,
+    playerSpeed: 120,
+    note: "Only one... BUT VERY FAST! ⚡"
   },
 
   6: {
     chasers: 2,
-    speed: 145,
-    note: "They're getting FAST! 🏃💨"
+    chaserSpeed: 155,
+    playerSpeed: 115,
+    note: "They're getting faster! 🏃💨"
   },
 
   7: {
     chasers: 3,
-    speed: 130,
+    chaserSpeed: 140,
+    playerSpeed: 110,
     note: "FINAL LEVEL. GOOD LUCK. 💀"
   }
 
 };
 
 
-/* =========================
+/* =====================================================
    NAME
-========================= */
+===================================================== */
 
 function getName() {
 
   const input =
     document.getElementById("playerName");
 
-  const value =
+  const name =
     input.value.trim();
 
-  if (!value) {
+  if (!name) {
 
     input.focus();
 
@@ -129,7 +141,7 @@ function getName() {
     return false;
   }
 
-  playerName = value;
+  playerName = name;
 
   localStorage.setItem(
     "lskdPlayerName",
@@ -144,9 +156,9 @@ function getName() {
 }
 
 
-/* =========================
+/* =====================================================
    MAZE
-========================= */
+===================================================== */
 
 function createMaze() {
 
@@ -174,11 +186,13 @@ function createMaze() {
       }
 
     }
+
   }
 
 
   const walls = [
 
+    // Upper vertical walls
     [3, 2],
     [3, 3],
     [3, 4],
@@ -195,12 +209,14 @@ function createMaze() {
     [11, 4],
     [11, 5],
 
+    // Middle
     [5, 8],
     [6, 8],
     [7, 8],
     [8, 8],
     [9, 8],
 
+    // Lower
     [3, 11],
     [4, 11],
     [5, 11],
@@ -284,7 +300,7 @@ function createMaze() {
   }
 
 
-  // Keep starting area open
+  // Starting area must stay open
 
   maze[1][1] = 0;
   maze[1][2] = 0;
@@ -293,9 +309,30 @@ function createMaze() {
 }
 
 
-/* =========================
+/* =====================================================
+   WALL CHECK
+===================================================== */
+
+function isWall(x, y) {
+
+  if (
+    x < 0 ||
+    y < 0 ||
+    x >= SIZE ||
+    y >= SIZE
+  ) {
+
+    return true;
+
+  }
+
+  return maze[y][x] === 1;
+}
+
+
+/* =====================================================
    PELLETS
-========================= */
+===================================================== */
 
 function createPellets() {
 
@@ -305,16 +342,22 @@ function createPellets() {
 
     for (let x = 1; x < SIZE - 1; x++) {
 
-      if (maze[y][x] !== 0) continue;
+      if (maze[y][x] === 1) {
+        continue;
+      }
+
+
+      // Don't put pellet on player start
 
       if (
-        x === player.x &&
-        y === player.y
+        x === 1 &&
+        y === 1
       ) {
         continue;
       }
 
-      // Keep chaser starting positions clear
+
+      // Don't put pellet on chaser starts
 
       const chaserStart =
         (
@@ -323,7 +366,10 @@ function createPellets() {
           (x === 1 && y === 13)
         );
 
-      if (chaserStart) continue;
+      if (chaserStart) {
+        continue;
+      }
+
 
       pellets.push({
         x,
@@ -337,58 +383,80 @@ function createPellets() {
 }
 
 
-/* =========================
-   MINES
-========================= */
+/* =====================================================
+   MINES — LEVEL 4
+===================================================== */
 
 function createMines() {
 
   mines = [];
 
-  if (level !== 4) return;
+  if (level !== 4) {
+    return;
+  }
+
 
   const possible =
     [...pellets];
+
 
   possible.sort(
     () => Math.random() - 0.5
   );
 
 
+  let placed = 0;
+
+
   for (
-    let i = 0;
-    i < 8 && i < possible.length;
-    i++
+    const spot of possible
   ) {
 
-    const spot = possible[i];
-
-    if (
-      Math.abs(spot.x - player.x) +
-      Math.abs(spot.y - player.y) > 3
-    ) {
-
-      mines.push({
-        x: spot.x,
-        y: spot.y
-      });
-
+    if (placed >= 8) {
+      break;
     }
+
+
+    const distance =
+      Math.abs(
+        spot.x - player.x
+      ) +
+      Math.abs(
+        spot.y - player.y
+      );
+
+
+    // Don't put mines too close
+    // to the starting point
+
+    if (distance <= 3) {
+      continue;
+    }
+
+
+    mines.push({
+      x: spot.x,
+      y: spot.y
+    });
+
+
+    placed++;
 
   }
 
 }
 
 
-/* =========================
+/* =====================================================
    CHASERS
-========================= */
+===================================================== */
 
 function createChasers() {
 
   chasers = [];
 
-  const positions = [
+
+  const startingPositions = [
 
     {
       x: 13,
@@ -415,10 +483,15 @@ function createChasers() {
     levelSettings[level].chasers;
 
 
-  for (let i = 0; i < amount; i++) {
+  for (
+    let i = 0;
+    i < amount;
+    i++
+  ) {
 
     const data =
-      positions[i];
+      startingPositions[i];
+
 
     chasers.push({
 
@@ -437,21 +510,20 @@ function createChasers() {
 }
 
 
-/* =========================
+/* =====================================================
    START LEVEL
-========================= */
+===================================================== */
 
 function startLevel() {
 
   createMaze();
 
+
   player.x = 1;
   player.y = 1;
 
-  player.nextX = 1;
-  player.nextY = 1;
-
   player.direction = "right";
+  player.wantedDirection = "right";
 
 
   createPellets();
@@ -459,6 +531,10 @@ function startLevel() {
   createMines();
 
   createChasers();
+
+
+  playerTimer = 0;
+  chaserTimer = 0;
 
 
   updateHUD();
@@ -472,163 +548,121 @@ function startLevel() {
 }
 
 
-/* =========================
-   WALL
-========================= */
-
-function isWall(x, y) {
-
-  if (
-    x < 0 ||
-    y < 0 ||
-    x >= SIZE ||
-    y >= SIZE
-  ) {
-
-    return true;
-
-  }
-
-  return maze[y][x] === 1;
-
-}
-
-
-/* =========================
+/* =====================================================
    DIRECTION
-========================= */
+===================================================== */
 
 function setDirection(direction) {
 
-  player.direction = direction;
+  player.wantedDirection =
+    direction;
 
 }
 
 
-/* =========================
-   PLAYER MOVEMENT
-========================= */
+/* =====================================================
+   GET NEXT POSITION
+===================================================== */
 
-function movePlayer() {
+function getNextPosition(
+  x,
+  y,
+  direction
+) {
 
-  let nx = player.x;
-  let ny = player.y;
+  let nx = x;
+  let ny = y;
 
-  if (player.direction === "up") {
+
+  if (direction === "up") {
     ny--;
   }
 
-  if (player.direction === "down") {
+  if (direction === "down") {
     ny++;
   }
 
-  if (player.direction === "left") {
+  if (direction === "left") {
     nx--;
   }
 
-  if (player.direction === "right") {
+  if (direction === "right") {
     nx++;
   }
 
 
-  // Kalau jalan di depan masih terbuka,
-  // lanjut terus ke arah tersebut.
-
-  if (!isWall(nx, ny)) {
-
-    player.x = nx;
-    player.y = ny;
-
-  }
-
-  // Kalau ketemu tembok, berhenti.
-  // Arah tetap tersimpan sehingga
-  // swipe berikutnya bisa langsung belok.
-
-  collectPellet();
-
-  checkMine();
-
-  checkChaserCollision();
-
-}
-/* =========================
-   DIRECTION
-========================= */
-
-function setDirection(direction) {
-
-  player.direction = direction;
+  return {
+    x: nx,
+    y: ny
+  };
 
 }
 
 
-/* =========================
+/* =====================================================
    PLAYER MOVEMENT
-========================= */
+===================================================== */
 
 function movePlayer() {
 
-  let nx = player.x;
-  let ny = player.y;
+  /*
+    FIRST:
+    Try the direction the player
+    most recently swiped.
 
-  if (player.direction === "up") {
-    ny--;
-  }
+    This means the player can swipe
+    BEFORE reaching a corner and the
+    character will turn automatically
+    when the path opens.
+  */
 
-  if (player.direction === "down") {
-    ny++;
-  }
+  const wanted =
+    getNextPosition(
+      player.x,
+      player.y,
+      player.wantedDirection
+    );
 
-  if (player.direction === "left") {
-    nx--;
-  }
-
-  if (player.direction === "right") {
-    nx++;
-  }
-
-
-  // Kalau jalan di depan masih terbuka,
-  // lanjut terus ke arah tersebut.
-
-  if (!isWall(nx, ny)) {
-
-    player.x = nx;
-    player.y = ny;
-
-  }
-
-  // Kalau ketemu tembok, berhenti.
-  // Arah tetap tersimpan sehingga
-  // swipe berikutnya bisa langsung belok.
-
-  collectPellet();
-
-  checkMine();
-
-  checkChaserCollision();
-
-}
-
-/* =========================
-   PLAYER MOVEMENT
-========================= */
-
-function movePlayer() {
 
   if (
     !isWall(
-      player.nextX,
-      player.nextY
+      wanted.x,
+      wanted.y
+    )
+  ) {
+
+    player.direction =
+      player.wantedDirection;
+
+  }
+
+
+  /*
+    THEN:
+    Continue moving in the current
+    direction.
+  */
+
+  const next =
+    getNextPosition(
+      player.x,
+      player.y,
+      player.direction
+    );
+
+
+  if (
+    !isWall(
+      next.x,
+      next.y
     )
   ) {
 
     player.x =
-      player.nextX;
+      next.x;
 
     player.y =
-      player.nextY;
+      next.y;
 
   }
 
@@ -642,9 +676,9 @@ function movePlayer() {
 }
 
 
-/* =========================
-   PELLET
-========================= */
+/* =====================================================
+   COLLECT PELLET
+===================================================== */
 
 function collectPellet() {
 
@@ -663,6 +697,7 @@ function collectPellet() {
       1
     );
 
+
     score += 10;
 
     updateHUD();
@@ -671,7 +706,8 @@ function collectPellet() {
 
 
   if (
-    pellets.length === 0
+    pellets.length === 0 &&
+    !levelChanging
   ) {
 
     nextLevel();
@@ -681,11 +717,16 @@ function collectPellet() {
 }
 
 
-/* =========================
-   MINE
-========================= */
+/* =====================================================
+   MINE COLLISION
+===================================================== */
 
 function checkMine() {
+
+  if (!gameRunning) {
+    return;
+  }
+
 
   const mine =
     mines.find(
@@ -695,7 +736,9 @@ function checkMine() {
     );
 
 
-  if (!mine) return;
+  if (!mine) {
+    return;
+  }
 
 
   mines =
@@ -708,35 +751,48 @@ function checkMine() {
     );
 
 
-  loseLife(
-    "mine"
-  );
+  loseLife("mine");
 
 }
 
 
-/* =========================
-   VALID CHASER MOVES
-========================= */
+/* =====================================================
+   CHASER VALID MOVES
+===================================================== */
 
 function getValidMoves(x, y) {
 
-  const moves = [];
-
   const directions = [
 
-    { x: 0, y: -1 },
+    {
+      x: 0,
+      y: -1
+    },
 
-    { x: 0, y: 1 },
+    {
+      x: 0,
+      y: 1
+    },
 
-    { x: -1, y: 0 },
+    {
+      x: -1,
+      y: 0
+    },
 
-    { x: 1, y: 0 }
+    {
+      x: 1,
+      y: 0
+    }
 
   ];
 
 
-  for (const direction of directions) {
+  const moves = [];
+
+
+  for (
+    const direction of directions
+  ) {
 
     const nx =
       x + direction.x;
@@ -764,9 +820,9 @@ function getValidMoves(x, y) {
 }
 
 
-/* =========================
+/* =====================================================
    CHASER MOVEMENT
-========================= */
+===================================================== */
 
 function moveChaser(chaser) {
 
@@ -779,8 +835,16 @@ function moveChaser(chaser) {
 
   if (
     moves.length === 0
-  ) return;
+  ) {
+    return;
+  }
 
+
+  /*
+    Mostly chase the player,
+    sometimes make a random move
+    so they don't feel TOO perfect.
+  */
 
   moves.sort(
     (a, b) => {
@@ -816,7 +880,7 @@ function moveChaser(chaser) {
 
 
   if (
-    Math.random() < 0.18
+    Math.random() < 0.15
   ) {
 
     chosen =
@@ -847,13 +911,20 @@ function moveChaser(chaser) {
 }
 
 
-/* =========================
+/* =====================================================
    CHASER COLLISION
-========================= */
+===================================================== */
 
 function checkChaserCollision() {
 
-  for (const chaser of chasers) {
+  if (!gameRunning) {
+    return;
+  }
+
+
+  for (
+    const chaser of chasers
+  ) {
 
     if (
       chaser.x === player.x &&
@@ -873,54 +944,47 @@ function checkChaserCollision() {
 }
 
 
-/* =========================
+/* =====================================================
    LOSE LIFE
-========================= */
+===================================================== */
 
 function loseLife(reason) {
 
-  if (!gameRunning) return;
+  if (!gameRunning) {
+    return;
+  }
 
 
   gameRunning = false;
 
   lives--;
 
-  updateHUD();
-
 
   if (reason === "mine") {
 
-    lastChaserName =
-      "ranjau";
+    showDeathPopup(
+      "mine"
+    );
 
   } else {
 
-    lastChaserName =
-      capitalize(reason);
+    showDeathPopup(
+      reason
+    );
 
   }
 
 
-  showDeathPopup();
-
-
-  // Respawn data
-
-  player.x = 1;
-  player.y = 1;
-
-  player.nextX = 1;
-  player.nextY = 1;
+  updateHUD();
 
 }
 
 
-/* =========================
+/* =====================================================
    DEATH POPUP
-========================= */
+===================================================== */
 
-function showDeathPopup() {
+function showDeathPopup(reason) {
 
   const overlay =
     document.getElementById(
@@ -934,10 +998,7 @@ function showDeathPopup() {
     );
 
 
-  if (
-    lastChaserName ===
-    "ranjau"
-  ) {
+  if (reason === "mine") {
 
     message.textContent =
       "Kamu gagal melarikan diri dan kena ranjau! 💣";
@@ -945,7 +1006,7 @@ function showDeathPopup() {
   } else {
 
     message.textContent =
-      `Kamu gagal melarikan diri dan digigit ${lastChaserName}! 😭`;
+      `Kamu gagal melarikan diri dan digigit ${capitalize(reason)}! 😭`;
 
   }
 
@@ -988,19 +1049,17 @@ function showDeathPopup() {
 }
 
 
-/* =========================
-   CONTINUE
-========================= */
+/* =====================================================
+   CONTINUE AFTER DEATH
+===================================================== */
 
 function continueGame() {
 
-  document
-    .getElementById(
-      "deathOverlay"
-    )
-    .classList.add(
-      "hidden"
-    );
+  document.getElementById(
+    "deathOverlay"
+  ).classList.add(
+    "hidden"
+  );
 
 
   if (lives <= 0) {
@@ -1010,6 +1069,19 @@ function continueGame() {
     return;
 
   }
+
+
+  /*
+    Respawn player at the start.
+    The score and collected pellets
+    stay the same.
+  */
+
+  player.x = 1;
+  player.y = 1;
+
+  player.direction = "right";
+  player.wantedDirection = "right";
 
 
   createChasers();
@@ -1028,11 +1100,19 @@ function continueGame() {
 }
 
 
-/* =========================
+/* =====================================================
    NEXT LEVEL
-========================= */
+===================================================== */
 
 function nextLevel() {
+
+  if (levelChanging) {
+    return;
+  }
+
+
+  levelChanging = true;
+
 
   if (level >= 7) {
 
@@ -1047,14 +1127,97 @@ function nextLevel() {
 
   score += 100;
 
+
   startLevel();
+
+
+  levelChanging = false;
 
 }
 
 
-/* =========================
+/* =====================================================
+   WIN GAME
+===================================================== */
+
+function winGame() {
+
+  gameRunning = false;
+
+  score += 500;
+
+
+  saveRank();
+
+
+  document.getElementById(
+    "gameScreen"
+  ).classList.add(
+    "hidden"
+  );
+
+
+  document.getElementById(
+    "winOverlay"
+  ).classList.remove(
+    "hidden"
+  );
+
+
+  document.getElementById(
+    "winScore"
+  ).textContent =
+    score;
+
+
+  document.getElementById(
+    "winRank"
+  ).textContent =
+    getRank(score);
+
+}
+
+
+/* =====================================================
+   END GAME
+===================================================== */
+
+function endGame() {
+
+  gameRunning = false;
+
+  saveRank();
+
+
+  document.getElementById(
+    "deathOverlay"
+  ).classList.add(
+    "hidden"
+  );
+
+
+  document.getElementById(
+    "gameScreen"
+  ).classList.add(
+    "hidden"
+  );
+
+
+  document.getElementById(
+    "homeScreen"
+  ).classList.remove(
+    "hidden"
+  );
+
+
+  displayRanks();
+
+}
+
+
+/* =====================================================
    HUD
-========================= */
+===================================================== */
 
 function updateHUD() {
 
@@ -1083,9 +1246,9 @@ function updateHUD() {
 }
 
 
-/* =========================
-   DRAW
-========================= */
+/* =====================================================
+   DRAW GAME
+===================================================== */
 
 function draw() {
 
@@ -1097,7 +1260,9 @@ function draw() {
   );
 
 
-  // Background
+  /*
+    Background
+  */
 
   ctx.fillStyle =
     "#F2CFBB";
@@ -1110,7 +1275,9 @@ function draw() {
   );
 
 
-  // Maze
+  /*
+    Maze walls
+  */
 
   for (
     let y = 0;
@@ -1126,7 +1293,9 @@ function draw() {
 
       if (
         maze[y][x] !== 1
-      ) continue;
+      ) {
+        continue;
+      }
 
 
       ctx.fillStyle =
@@ -1152,15 +1321,17 @@ function draw() {
   }
 
 
-  // Pellets
+  /*
+    Pellets
+  */
+
+  ctx.fillStyle =
+    "#E9E29B";
+
 
   for (
     const pellet of pellets
   ) {
-
-    ctx.fillStyle =
-      "#E9E29B";
-
 
     ctx.beginPath();
 
@@ -1185,14 +1356,16 @@ function draw() {
   }
 
 
-  // Mines
+  /*
+    Mines
+  */
 
   for (
     const mine of mines
   ) {
 
     ctx.font =
-      "23px Arial";
+      "22px Arial";
 
     ctx.textAlign =
       "center";
@@ -1214,7 +1387,9 @@ function draw() {
   }
 
 
-  // Chasers
+  /*
+    Chasers
+  */
 
   for (
     const chaser of chasers
@@ -1230,7 +1405,9 @@ function draw() {
   }
 
 
-  // Player
+  /*
+    Player
+  */
 
   drawCharacter(
     playerImage,
@@ -1242,9 +1419,9 @@ function draw() {
 }
 
 
-/* =========================
-   CHARACTER DRAW
-========================= */
+/* =====================================================
+   DRAW CHARACTER
+===================================================== */
 
 function drawCharacter(
   image,
@@ -1273,54 +1450,57 @@ function drawCharacter(
 
     );
 
-  } else {
-
-    ctx.fillStyle =
-      "#F28892";
-
-
-    ctx.beginPath();
-
-
-    ctx.arc(
-
-      x * TILE +
-        TILE / 2,
-
-      y * TILE +
-        TILE / 2,
-
-      size / 2,
-
-      0,
-
-      Math.PI * 2
-
-    );
-
-
-    ctx.fill();
+    return;
 
   }
+
+
+  /*
+    Fallback if image isn't loaded yet.
+  */
+
+  ctx.fillStyle =
+    "#F28892";
+
+
+  ctx.beginPath();
+
+
+  ctx.arc(
+
+    x * TILE +
+      TILE / 2,
+
+    y * TILE +
+      TILE / 2,
+
+    size / 2,
+
+    0,
+
+    Math.PI * 2
+
+  );
+
+
+  ctx.fill();
 
 }
 
 
-/* =========================
+/* =====================================================
    GAME LOOP
-========================= */
+===================================================== */
 
-function gameLoop(
-  timestamp
-) {
+function gameLoop(timestamp) {
 
-  if (!gameRunning)
+  if (!gameRunning) {
     return;
+  }
 
 
   const delta =
-    timestamp -
-    lastTime;
+    timestamp - lastTime;
 
 
   lastTime =
@@ -1334,8 +1514,17 @@ function gameLoop(
     delta;
 
 
+  /*
+    PLAYER
+  */
+
+  const playerSpeed =
+    levelSettings[level]
+      .playerSpeed;
+
+
   if (
-    playerTimer >= 130
+    playerTimer >= playerSpeed
   ) {
 
     movePlayer();
@@ -1345,14 +1534,17 @@ function gameLoop(
   }
 
 
-  const speed =
-    levelSettings[
-      level
-    ].speed;
+  /*
+    CHASERS
+  */
+
+  const chaserSpeed =
+    levelSettings[level]
+      .chaserSpeed;
 
 
   if (
-    chaserTimer >= speed
+    chaserTimer >= chaserSpeed
   ) {
 
     for (
@@ -1363,10 +1555,13 @@ function gameLoop(
         chaser
       );
 
-      if (!gameRunning)
+
+      if (!gameRunning) {
         break;
+      }
 
     }
+
 
     chaserTimer = 0;
 
@@ -1383,65 +1578,54 @@ function gameLoop(
 }
 
 
-/* =========================
+/* =====================================================
    START GAME
-========================= */
+===================================================== */
 
 function startGame() {
 
   level = 1;
-
   score = 0;
-
   lives = 3;
 
+  levelChanging = false;
 
   gameRunning = true;
 
 
-  document
-    .getElementById(
-      "nameScreen"
-    )
-    .classList.add(
-      "hidden"
-    );
+  document.getElementById(
+    "nameScreen"
+  ).classList.add(
+    "hidden"
+  );
 
 
-  document
-    .getElementById(
-      "homeScreen"
-    )
-    .classList.add(
-      "hidden"
-    );
+  document.getElementById(
+    "homeScreen"
+  ).classList.add(
+    "hidden"
+  );
 
 
-  document
-    .getElementById(
-      "gameScreen"
-    )
-    .classList.remove(
-      "hidden"
-    );
+  document.getElementById(
+    "gameScreen"
+  ).classList.remove(
+    "hidden"
+  );
 
 
-  document
-    .getElementById(
-      "deathOverlay"
-    )
-    .classList.add(
-      "hidden"
-    );
+  document.getElementById(
+    "deathOverlay"
+  ).classList.add(
+    "hidden"
+  );
 
 
-  document
-    .getElementById(
-      "winOverlay"
-    )
-    .classList.add(
-      "hidden"
-    );
+  document.getElementById(
+    "winOverlay"
+  ).classList.add(
+    "hidden"
+  );
 
 
   startLevel();
@@ -1458,97 +1642,9 @@ function startGame() {
 }
 
 
-/* =========================
-   END GAME
-========================= */
-
-function endGame() {
-
-  gameRunning = false;
-
-  saveRank();
-
-
-  document
-    .getElementById(
-      "deathOverlay"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "gameScreen"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "homeScreen"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  displayRanks();
-
-}
-
-
-/* =========================
-   WIN
-========================= */
-
-function winGame() {
-
-  gameRunning = false;
-
-  score += 500;
-
-  saveRank();
-
-
-  document
-    .getElementById(
-      "gameScreen"
-    )
-    .classList.add(
-      "hidden"
-    );
-
-
-  document
-    .getElementById(
-      "winOverlay"
-    )
-    .classList.remove(
-      "hidden"
-    );
-
-
-  document.getElementById(
-    "winScore"
-  ).textContent =
-    score;
-
-
-  document.getElementById(
-    "winRank"
-  ).textContent =
-    getRank(score);
-
-}
-
-
-/* =========================
+/* =====================================================
    RANK SYSTEM
-========================= */
+===================================================== */
 
 function getRanks() {
 
@@ -1638,6 +1734,11 @@ function displayRanks() {
     );
 
 
+  if (!rankList) {
+    return;
+  }
+
+
   const ranks =
     getRanks();
 
@@ -1699,9 +1800,9 @@ function displayRanks() {
 }
 
 
-/* =========================
-   SWIPE CONTROL
-========================= */
+/* =====================================================
+   SWIPE CONTROLS
+===================================================== */
 
 let touchStartX = 0;
 let touchStartY = 0;
@@ -1731,6 +1832,11 @@ gameArea.addEventListener(
 gameArea.addEventListener(
   "touchmove",
   event => {
+
+    /*
+      Prevent the page from scrolling
+      while playing.
+    */
 
     event.preventDefault();
 
@@ -1766,12 +1872,20 @@ gameArea.addEventListener(
       );
 
 
-    // Ignore tiny taps
+    /*
+      Ignore tiny taps.
+    */
 
     if (
       distance < 25
-    ) return;
+    ) {
+      return;
+    }
 
+
+    /*
+      Horizontal swipe
+    */
 
     if (
       Math.abs(dx) >
@@ -1792,21 +1906,26 @@ gameArea.addEventListener(
 
       }
 
+      return;
+
+    }
+
+
+    /*
+      Vertical swipe
+    */
+
+    if (dy > 0) {
+
+      setDirection(
+        "down"
+      );
+
     } else {
 
-      if (dy > 0) {
-
-        setDirection(
-          "down"
-        );
-
-      } else {
-
-        setDirection(
-          "up"
-        );
-
-      }
+      setDirection(
+        "up"
+      );
 
     }
 
@@ -1817,15 +1936,15 @@ gameArea.addEventListener(
 );
 
 
-/* =========================
-   KEYBOARD
-========================= */
+/* =====================================================
+   KEYBOARD CONTROLS
+===================================================== */
 
 document.addEventListener(
   "keydown",
   event => {
 
-    const keys = {
+    const directions = {
 
       ArrowUp: "up",
       ArrowDown: "down",
@@ -1848,13 +1967,14 @@ document.addEventListener(
 
 
     if (
-      keys[event.key]
+      directions[event.key]
     ) {
 
       event.preventDefault();
 
+
       setDirection(
-        keys[event.key]
+        directions[event.key]
       );
 
     }
@@ -1863,9 +1983,9 @@ document.addEventListener(
 );
 
 
-/* =========================
+/* =====================================================
    BUTTONS
-========================= */
+===================================================== */
 
 document
   .getElementById(
@@ -1887,6 +2007,7 @@ document
             "hidden"
           );
 
+
         document
           .getElementById(
             "homeScreen"
@@ -1894,6 +2015,7 @@ document
           .classList.remove(
             "hidden"
           );
+
 
         displayRanks();
 
@@ -1930,6 +2052,9 @@ document
   .addEventListener(
     "click",
     () => {
+
+      gameRunning = false;
+
 
       document
         .getElementById(
@@ -1974,9 +2099,9 @@ document
   );
 
 
-/* =========================
+/* =====================================================
    HELPER
-========================= */
+===================================================== */
 
 function capitalize(text) {
 
@@ -1990,23 +2115,28 @@ function capitalize(text) {
 
 function escapeHTML(text) {
 
-  return text
+  return String(text)
+
     .replace(
       /&/g,
       "&amp;"
     )
+
     .replace(
       /</g,
       "&lt;"
     )
+
     .replace(
       />/g,
       "&gt;"
     )
+
     .replace(
       /"/g,
       "&quot;"
     )
+
     .replace(
       /'/g,
       "&#039;"
@@ -2015,9 +2145,9 @@ function escapeHTML(text) {
 }
 
 
-/* =========================
+/* =====================================================
    LOAD SAVED NAME
-========================= */
+===================================================== */
 
 const savedName =
   localStorage.getItem(
@@ -2027,16 +2157,30 @@ const savedName =
 
 if (savedName) {
 
-  document.getElementById(
-    "playerName"
-  ).value =
+  playerName =
     savedName;
+
+
+  const input =
+    document.getElementById(
+      "playerName"
+    );
+
+
+  if (input) {
+
+    input.value =
+      savedName;
+
+  }
 
 }
 
 
-/* =========================
-   INITIAL RANK
-========================= */
+/* =====================================================
+   INITIAL DISPLAY
+===================================================== */
 
 displayRanks();
+
+draw();
