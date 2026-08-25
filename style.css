@@ -718,3 +718,42 @@ h1 {
   }
 
 }
+/* =========================================
+   LSKD DEATH POPUP
+========================================= */
+
+.death-popup {
+  text-align: center;
+}
+
+.popup-shout {
+  font-size: 2rem !important;
+  font-weight: 800;
+
+  margin-bottom: 2px;
+}
+
+.death-popup h2 {
+  font-size: 2.2rem !important;
+  line-height: 1;
+
+  margin: 4px 0 12px;
+
+  letter-spacing: 1px;
+}
+
+.death-message {
+  display: block;
+
+  width: 100%;
+  max-width: 290px;
+
+  margin: 0 auto 16px !important;
+
+  text-align: center !important;
+
+  font-size: 1.15rem !important;
+  line-height: 1.35;
+
+  font-weight: 600;
+}
