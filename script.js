@@ -929,7 +929,7 @@ function draw() {
     Pellets
   */
 
-  ctx.fillStyle = "#E9E29B";
+  ctx.fillStyle = "#E85D68";
 
   for (const pellet of pellets) {
 
