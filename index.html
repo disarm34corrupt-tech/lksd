@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LSKD — Larilah Sebelum Kau Digigit</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <main class="app">
+
+    <!-- HOME -->
+    <section id="homeScreen" class="screen home-screen">
+
+      <div class="mascot-wrap">
+        <img
+          class="mascot"
+          src="5_20260825_165035_0003.png"
+          alt="LSKD mascot">
+      </div>
+
+      <p class="eyebrow">A tiny pastel chase game</p>
+
+      <h1>LSKD</h1>
+
+      <p class="tagline">
+        Larilah Sebelum Kau Digigit!
+      </p>
+
+      <button id="playBtn" class="big-btn">
+        PLAY ✦
+      </button>
+
+      <div class="billboard">
+
+        <div class="billboard-title">
+          🏆 LSKD RANK
+        </div>
+
+        <div id="rankList"></div>
+
+      </div>
+
+    </section>
+
+
+    <!-- GAME -->
+    <section id="gameScreen" class="screen game-screen hidden">
+
+      <header class="hud">
+
+        <div>
+          <span>LEVEL</span>
+          <strong id="levelText">1</strong>
+        </div>
+
+        <div>
+          <span>SCORE</span>
+          <strong id="scoreText">0</strong>
+        </div>
+
+        <div>
+          <span>❤️</span>
+          <strong id="livesText">3</strong>
+        </div>
+
+      </header>
+
+      <div class="game-note" id="levelNote">
+        Run from Val!
+      </div>
+
+      <canvas
+        id="gameCanvas"
+        width="600"
+        height="600">
+      </canvas>
+
+      <div class="controls">
+
+        <button data-dir="up">▲</button>
+
+        <div>
+          <button data-dir="left">◀</button>
+          <button data-dir="down">▼</button>
+          <button data-dir="right">▶</button>
+        </div>
+
+      </div>
+
+      <p class="hint">
+        Arrow keys / WASD to move
+      </p>
+
+    </section>
+
+
+    <!-- END -->
+    <section id="endScreen" class="screen end-screen hidden">
+
+      <div class="mascot-wrap small">
+        <img
+          class="mascot"
+          src="5_20260825_165035_0003.png"
+          alt="LSKD mascot">
+      </div>
+
+      <h2 id="endTitle">
+        GAME OVER!
+      </h2>
+
+      <p id="endMessage">
+        You got bitten. 😭
+      </p>
+
+      <div class="result-card">
+
+        <p>FINAL SCORE</p>
+        <strong id="finalScore">0</strong>
+
+        <p>LEVEL REACHED</p>
+        <strong id="finalLevel">1</strong>
+
+        <p>RANK</p>
+        <strong id="finalRank">—</strong>
+
+      </div>
+
+      <button id="againBtn" class="big-btn">
+        PLAY AGAIN ✦
+      </button>
+
+      <button id="homeBtn" class="text-btn">
+        Back to billboard
+      </button>
+
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+
+</body>
+</html>
