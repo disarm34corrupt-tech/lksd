@@ -2,11 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
   <title>LSKD — Larilah Sebelum Kau Digigit</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Playful fonts with a similar whimsical vibe -->
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=DM+Serif+Display:ital@0;1&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -14,8 +19,11 @@
 
   <main class="app">
 
-    <!-- HOME -->
-    <section id="homeScreen" class="screen home-screen">
+    <!-- =========================
+         NAME SCREEN
+    ========================== -->
+
+    <section id="nameScreen" class="screen name-screen">
 
       <div class="mascot-wrap">
         <img
@@ -24,22 +32,76 @@
           alt="LSKD mascot">
       </div>
 
-      <p class="eyebrow">A tiny pastel chase game</p>
+      <p class="tiny-title">WELCOME TO</p>
 
       <h1>LSKD</h1>
 
-      <p class="tagline">
+      <p class="subtitle">
+        Larilah Sebelum Kau Digigit
+      </p>
+
+      <div class="name-card">
+
+        <label for="playerName">
+          Siapa yang mau melarikan diri? 👀
+        </label>
+
+        <input
+          id="playerName"
+          type="text"
+          maxlength="15"
+          autocomplete="off"
+          placeholder="Ketik nama kamu..."
+        >
+
+        <button id="startBtn" class="main-btn">
+          LET'S RUN! ✦
+        </button>
+
+      </div>
+
+      <p class="little-warning">
+        Mereka sudah menunggumu...
+      </p>
+
+    </section>
+
+
+    <!-- =========================
+         HOME / BILLBOARD
+    ========================== -->
+
+    <section id="homeScreen" class="screen home-screen hidden">
+
+      <div class="mini-mascot">
+        <img
+          src="5_20260825_165035_0003.png"
+          alt="LSKD mascot">
+      </div>
+
+      <p class="welcome-text">
+        Ready, <strong id="welcomeName">Player</strong>?
+      </p>
+
+      <h2>LSKD</h2>
+
+      <p class="subtitle">
         Larilah Sebelum Kau Digigit!
       </p>
 
-      <button id="playBtn" class="big-btn">
+      <button id="playBtn" class="main-btn">
         PLAY ✦
       </button>
 
+
+      <!-- BILLBOARD -->
+
       <div class="billboard">
 
-        <div class="billboard-title">
-          🏆 LSKD RANK
+        <div class="billboard-header">
+          <span>✦</span>
+          <h3>LSKD RANK</h3>
+          <span>✦</span>
         </div>
 
         <div id="rankList"></div>
@@ -49,99 +111,162 @@
     </section>
 
 
-    <!-- GAME -->
+    <!-- =========================
+         GAME SCREEN
+    ========================== -->
+
     <section id="gameScreen" class="screen game-screen hidden">
 
       <header class="hud">
 
-        <div>
-          <span>LEVEL</span>
+        <div class="hud-box">
+          <small>LEVEL</small>
           <strong id="levelText">1</strong>
         </div>
 
-        <div>
-          <span>SCORE</span>
+        <div class="hud-box score-box">
+          <small>SCORE</small>
           <strong id="scoreText">0</strong>
         </div>
 
-        <div>
-          <span>❤️</span>
-          <strong id="livesText">3</strong>
+        <div class="hud-box lives-box">
+          <small>LIVES</small>
+          <strong id="livesText">❤️❤️❤️</strong>
         </div>
 
       </header>
 
+
       <div class="game-note" id="levelNote">
-        Run from Val!
+        Val is coming... RUN! 👀
       </div>
 
-      <canvas
-        id="gameCanvas"
-        width="600"
-        height="600">
-      </canvas>
 
-      <div class="controls">
+      <!-- IMPORTANT:
+           Swipe will happen directly on this canvas -->
+      <div id="gameArea">
 
-        <button data-dir="up">▲</button>
+        <canvas
+          id="gameCanvas"
+          width="600"
+          height="600">
+        </canvas>
 
-        <div>
-          <button data-dir="left">◀</button>
-          <button data-dir="down">▼</button>
-          <button data-dir="right">▶</button>
+      </div>
+
+
+      <p class="swipe-hint">
+        SWIPE TO RUN ✦
+      </p>
+
+    </section>
+
+
+    <!-- =========================
+         GAME OVER POPUP
+    ========================== -->
+
+    <div id="deathOverlay" class="overlay hidden">
+
+      <div class="death-popup">
+
+        <div class="popup-mascot">
+          <img
+            src="5_20260825_165035_0003.png"
+            alt="LSKD mascot">
         </div>
 
-      </div>
+        <p class="popup-shout">
+          YAH!!!!
+        </p>
 
-      <p class="hint">
-        Arrow keys / WASD to move
-      </p>
+        <h2>
+          Kamu gagal<br>
+          melarikan diri!
+        </h2>
 
-    </section>
+        <p class="death-message" id="deathMessage">
+          Kamu digigit Val! 😭
+        </p>
 
+        <div class="death-stats">
 
-    <!-- END -->
-    <section id="endScreen" class="screen end-screen hidden">
+          <div>
+            <small>SCORE</small>
+            <strong id="finalScore">0</strong>
+          </div>
 
-      <div class="mascot-wrap small">
-        <img
-          class="mascot"
-          src="5_20260825_165035_0003.png"
-          alt="LSKD mascot">
-      </div>
+          <div>
+            <small>LEVEL</small>
+            <strong id="finalLevel">1</strong>
+          </div>
 
-      <h2 id="endTitle">
-        GAME OVER!
-      </h2>
+        </div>
 
-      <p id="endMessage">
-        You got bitten. 😭
-      </p>
+        <button id="againBtn" class="main-btn">
+          COBA LAGI ✦
+        </button>
 
-      <div class="result-card">
-
-        <p>FINAL SCORE</p>
-        <strong id="finalScore">0</strong>
-
-        <p>LEVEL REACHED</p>
-        <strong id="finalLevel">1</strong>
-
-        <p>RANK</p>
-        <strong id="finalRank">—</strong>
+        <button id="homeBtn" class="text-btn">
+          Kembali ke billboard
+        </button>
 
       </div>
 
-      <button id="againBtn" class="big-btn">
-        PLAY AGAIN ✦
-      </button>
+    </div>
 
-      <button id="homeBtn" class="text-btn">
-        Back to billboard
-      </button>
 
-    </section>
+    <!-- =========================
+         WIN POPUP
+    ========================== -->
+
+    <div id="winOverlay" class="overlay hidden">
+
+      <div class="death-popup win-popup">
+
+        <div class="popup-mascot">
+          <img
+            src="5_20260825_165035_0003.png"
+            alt="LSKD mascot">
+        </div>
+
+        <p class="popup-shout">
+          YAY!!!!
+        </p>
+
+        <h2>
+          KAMU BERHASIL<br>
+          KABUR! 🎉
+        </h2>
+
+        <p class="death-message">
+          Kamu selamat dari mereka semua!
+        </p>
+
+        <div class="death-stats">
+
+          <div>
+            <small>SCORE</small>
+            <strong id="winScore">0</strong>
+          </div>
+
+          <div>
+            <small>RANK</small>
+            <strong id="winRank">#1</strong>
+          </div>
+
+        </div>
+
+        <button id="winAgainBtn" class="main-btn">
+          MAIN LAGI ✦
+        </button>
+
+      </div>
+
+    </div>
 
   </main>
+
 
   <script src="script.js"></script>
 
