@@ -722,15 +722,31 @@ function showDeathPopup(reason) {
 
   if (reason === "mine") {
 
-    message.textContent =
-      "Kamu gagal melarikan diri dan kena ranjau! 💣";
+  message.textContent =
+    "Kamu malah nginjek ranjau! 💣😭";
 
-  } else {
+} else {
 
-    message.textContent =
-      `Kamu gagal melarikan diri dan digigit ${capitalize(reason)}! 😭`;
-  }
+  const name =
+    capitalize(reason);
 
+  const messages = {
+
+    Val:
+      "Val berhasil nangkep kamu! 💀",
+
+    Taka:
+      "Taka akhirnya dapet kamu! 😭",
+
+    Nael:
+      "Nael berhasil nyusul kamu! 💀"
+
+  };
+
+  message.textContent =
+    messages[name] ||
+    `${name} berhasil nangkep kamu! 😭`;
+}
 
   document.getElementById(
     "finalScore"
