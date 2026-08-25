@@ -1,6 +1,8 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+const gameArea = document.getElementById("gameArea");
+
 const TILE = 40;
 const SIZE = 15;
 
@@ -17,7 +19,12 @@ chaserImages.val.src = "2_20260825_165035_0000.png";
 chaserImages.taka.src = "3_20260825_165035_0001.png";
 chaserImages.nael.src = "4_20260825_165035_0002.png";
 
-const chaserNames = ["Val", "Taka", "Nael"];
+
+/* =========================
+   GAME VARIABLES
+========================= */
+
+let playerName = "";
 
 let level = 1;
 let score = 0;
@@ -29,15 +36,21 @@ let mines = [];
 let chasers = [];
 
 let gameRunning = false;
+
 let lastTime = 0;
-let playerMoveTimer = 0;
-let chaserMoveTimer = 0;
+let playerTimer = 0;
+let chaserTimer = 0;
+
+let lastChaserName = "someone";
+
 
 const player = {
   x: 1,
   y: 1,
+
   nextX: 1,
   nextY: 1,
+
   direction: "right"
 };
 
@@ -47,6 +60,7 @@ const player = {
 ========================= */
 
 const levelSettings = {
+
   1: {
     chasers: 1,
     speed: 360,
@@ -67,33 +81,71 @@ const levelSettings = {
 
   4: {
     chasers: 3,
-    speed: 290,
+    speed: 285,
     mines: true,
     note: "WATCH OUT FOR MINES! 💣"
   },
 
   5: {
     chasers: 1,
-    speed: 130,
+    speed: 125,
     note: "Only one... but VERY FAST. ⚡"
   },
 
   6: {
     chasers: 2,
-    speed: 150,
+    speed: 145,
     note: "They're getting FAST! 🏃💨"
   },
 
   7: {
     chasers: 3,
-    speed: 140,
+    speed: 130,
     note: "FINAL LEVEL. GOOD LUCK. 💀"
   }
+
 };
 
 
 /* =========================
-   MAZE GENERATOR
+   NAME
+========================= */
+
+function getName() {
+
+  const input =
+    document.getElementById("playerName");
+
+  const value =
+    input.value.trim();
+
+  if (!value) {
+
+    input.focus();
+
+    input.placeholder =
+      "Nama dulu dong 😭";
+
+    return false;
+  }
+
+  playerName = value;
+
+  localStorage.setItem(
+    "lskdPlayerName",
+    playerName
+  );
+
+  document.getElementById(
+    "welcomeName"
+  ).textContent = playerName;
+
+  return true;
+}
+
+
+/* =========================
+   MAZE
 ========================= */
 
 function createMaze() {
@@ -106,49 +158,62 @@ function createMaze() {
 
     for (let x = 0; x < SIZE; x++) {
 
-      // Border
       if (
         x === 0 ||
         y === 0 ||
         x === SIZE - 1 ||
         y === SIZE - 1
       ) {
+
         maze[y][x] = 1;
+
       } else {
+
         maze[y][x] = 0;
+
       }
 
     }
   }
 
 
-  // Main walls
   const walls = [
 
-    [3, 2], [3, 3], [3, 4],
-    [3, 5], [3, 6],
+    [3, 2],
+    [3, 3],
+    [3, 4],
+    [3, 5],
+    [3, 6],
 
-    [7, 2], [7, 3],
-    [7, 4], [7, 5],
+    [7, 2],
+    [7, 3],
+    [7, 4],
+    [7, 5],
 
-    [11, 2], [11, 3],
-    [11, 4], [11, 5],
+    [11, 2],
+    [11, 3],
+    [11, 4],
+    [11, 5],
 
-    [5, 8], [6, 8],
-    [7, 8], [8, 8],
+    [5, 8],
+    [6, 8],
+    [7, 8],
+    [8, 8],
     [9, 8],
 
-    [3, 11], [4, 11],
+    [3, 11],
+    [4, 11],
     [5, 11],
 
-    [9, 11], [10, 11],
+    [9, 11],
+    [10, 11],
     [11, 11],
 
     [7, 12]
+
   ];
 
 
-  // Add more walls as levels increase
   if (level >= 2) {
 
     walls.push(
@@ -157,6 +222,7 @@ function createMaze() {
       [12, 9],
       [12, 10]
     );
+
   }
 
 
@@ -168,6 +234,7 @@ function createMaze() {
       [8, 3],
       [8, 4]
     );
+
   }
 
 
@@ -179,6 +246,7 @@ function createMaze() {
       [9, 6],
       [10, 6]
     );
+
   }
 
 
@@ -190,6 +258,7 @@ function createMaze() {
       [2, 12],
       [12, 12]
     );
+
   }
 
 
@@ -204,18 +273,23 @@ function createMaze() {
       [5, 13],
       [9, 13]
     );
+
   }
 
 
   for (const [x, y] of walls) {
+
     maze[y][x] = 1;
+
   }
 
 
-  // Keep starting area clear
+  // Keep starting area open
+
   maze[1][1] = 0;
   maze[1][2] = 0;
   maze[2][1] = 0;
+
 }
 
 
@@ -231,19 +305,35 @@ function createPellets() {
 
     for (let x = 1; x < SIZE - 1; x++) {
 
+      if (maze[y][x] !== 0) continue;
+
       if (
-        maze[y][x] === 0 &&
-        !(x === player.x && y === player.y)
+        x === player.x &&
+        y === player.y
       ) {
-
-        pellets.push({
-          x,
-          y
-        });
-
+        continue;
       }
+
+      // Keep chaser starting positions clear
+
+      const chaserStart =
+        (
+          (x === 13 && y === 13) ||
+          (x === 13 && y === 1) ||
+          (x === 1 && y === 13)
+        );
+
+      if (chaserStart) continue;
+
+      pellets.push({
+        x,
+        y
+      });
+
     }
+
   }
+
 }
 
 
@@ -257,26 +347,36 @@ function createMines() {
 
   if (level !== 4) return;
 
-  const possible = pellets.slice();
+  const possible =
+    [...pellets];
 
-  // Randomly select 8 mines
-  possible.sort(() => Math.random() - 0.5);
+  possible.sort(
+    () => Math.random() - 0.5
+  );
 
-  for (let i = 0; i < 8 && i < possible.length; i++) {
 
-    const mine = possible[i];
+  for (
+    let i = 0;
+    i < 8 && i < possible.length;
+    i++
+  ) {
 
-    // Don't put mine too close to player
+    const spot = possible[i];
+
     if (
-      Math.abs(mine.x - player.x) +
-      Math.abs(mine.y - player.y) > 3
+      Math.abs(spot.x - player.x) +
+      Math.abs(spot.y - player.y) > 3
     ) {
+
       mines.push({
-        x: mine.x,
-        y: mine.y
+        x: spot.x,
+        y: spot.y
       });
+
     }
+
   }
+
 }
 
 
@@ -289,31 +389,51 @@ function createChasers() {
   chasers = [];
 
   const positions = [
-    { x: 13, y: 13 },
-    { x: 13, y: 1 },
-    { x: 1, y: 13 }
+
+    {
+      x: 13,
+      y: 13,
+      name: "val"
+    },
+
+    {
+      x: 13,
+      y: 1,
+      name: "taka"
+    },
+
+    {
+      x: 1,
+      y: 13,
+      name: "nael"
+    }
+
   ];
 
 
-  const names = ["val", "taka", "nael"];
+  const amount =
+    levelSettings[level].chasers;
 
-  const amount = levelSettings[level].chasers;
 
   for (let i = 0; i < amount; i++) {
 
+    const data =
+      positions[i];
+
     chasers.push({
 
-      name: names[i],
+      name: data.name,
 
-      x: positions[i].x,
-      y: positions[i].y,
+      x: data.x,
+      y: data.y,
 
-      image: chaserImages[names[i]],
-
-      moveTimer: 0
+      image:
+        chaserImages[data.name]
 
     });
+
   }
+
 }
 
 
@@ -333,19 +453,27 @@ function startLevel() {
 
   player.direction = "right";
 
+
   createPellets();
+
   createMines();
+
   createChasers();
+
 
   updateHUD();
 
-  document.getElementById("levelNote").textContent =
+
+  document.getElementById(
+    "levelNote"
+  ).textContent =
     levelSettings[level].note;
+
 }
 
 
 /* =========================
-   COLLISION
+   WALL
 ========================= */
 
 function isWall(x, y) {
@@ -356,16 +484,48 @@ function isWall(x, y) {
     x >= SIZE ||
     y >= SIZE
   ) {
+
     return true;
+
   }
 
   return maze[y][x] === 1;
+
 }
 
 
-function samePosition(a, b) {
+/* =========================
+   DIRECTION
+========================= */
 
-  return a.x === b.x && a.y === b.y;
+function setDirection(direction) {
+
+  player.direction =
+    direction;
+
+
+  let nx =
+    player.x;
+
+  let ny =
+    player.y;
+
+
+  if (direction === "up") ny--;
+
+  if (direction === "down") ny++;
+
+  if (direction === "left") nx--;
+
+  if (direction === "right") nx++;
+
+
+  if (!isWall(nx, ny)) {
+
+    player.nextX = nx;
+    player.nextY = ny;
+
+  }
 
 }
 
@@ -374,55 +534,53 @@ function samePosition(a, b) {
    PLAYER MOVEMENT
 ========================= */
 
-function setDirection(direction) {
-
-  player.direction = direction;
-
-  let nx = player.x;
-  let ny = player.y;
-
-  if (direction === "up") ny--;
-  if (direction === "down") ny++;
-  if (direction === "left") nx--;
-  if (direction === "right") nx++;
-
-  if (!isWall(nx, ny)) {
-
-    player.nextX = nx;
-    player.nextY = ny;
-
-  }
-}
-
-
 function movePlayer() {
 
-  if (!isWall(player.nextX, player.nextY)) {
+  if (
+    !isWall(
+      player.nextX,
+      player.nextY
+    )
+  ) {
 
-    player.x = player.nextX;
-    player.y = player.nextY;
+    player.x =
+      player.nextX;
+
+    player.y =
+      player.nextY;
 
   }
 
+
   collectPellet();
+
   checkMine();
+
   checkChaserCollision();
+
 }
 
 
 /* =========================
-   COLLECT PELLET
+   PELLET
 ========================= */
 
 function collectPellet() {
 
-  const index = pellets.findIndex(
-    p => p.x === player.x && p.y === player.y
-  );
+  const index =
+    pellets.findIndex(
+      pellet =>
+        pellet.x === player.x &&
+        pellet.y === player.y
+    );
+
 
   if (index !== -1) {
 
-    pellets.splice(index, 1);
+    pellets.splice(
+      index,
+      1
+    );
 
     score += 10;
 
@@ -431,38 +589,53 @@ function collectPellet() {
   }
 
 
-  if (pellets.length === 0) {
+  if (
+    pellets.length === 0
+  ) {
 
     nextLevel();
 
   }
+
 }
 
 
 /* =========================
-   MINES
+   MINE
 ========================= */
 
 function checkMine() {
 
-  const mine = mines.find(
-    m => m.x === player.x && m.y === player.y
-  );
-
-  if (mine) {
-
-    mines = mines.filter(
-      m => !(m.x === player.x && m.y === player.y)
+  const mine =
+    mines.find(
+      item =>
+        item.x === player.x &&
+        item.y === player.y
     );
 
-    loseLife();
 
-  }
+  if (!mine) return;
+
+
+  mines =
+    mines.filter(
+      item =>
+        !(
+          item.x === player.x &&
+          item.y === player.y
+        )
+    );
+
+
+  loseLife(
+    "mine"
+  );
+
 }
 
 
 /* =========================
-   CHASER AI
+   VALID CHASER MOVES
 ========================= */
 
 function getValidMoves(x, y) {
@@ -470,19 +643,30 @@ function getValidMoves(x, y) {
   const moves = [];
 
   const directions = [
+
     { x: 0, y: -1 },
+
     { x: 0, y: 1 },
+
     { x: -1, y: 0 },
+
     { x: 1, y: 0 }
+
   ];
 
 
-  for (const d of directions) {
+  for (const direction of directions) {
 
-    const nx = x + d.x;
-    const ny = y + d.y;
+    const nx =
+      x + direction.x;
 
-    if (!isWall(nx, ny)) {
+    const ny =
+      y + direction.y;
+
+
+    if (
+      !isWall(nx, ny)
+    ) {
 
       moves.push({
         x: nx,
@@ -490,56 +674,95 @@ function getValidMoves(x, y) {
       });
 
     }
+
   }
 
+
   return moves;
+
 }
 
 
+/* =========================
+   CHASER MOVEMENT
+========================= */
+
 function moveChaser(chaser) {
 
-  const moves = getValidMoves(
-    chaser.x,
-    chaser.y
+  const moves =
+    getValidMoves(
+      chaser.x,
+      chaser.y
+    );
+
+
+  if (
+    moves.length === 0
+  ) return;
+
+
+  moves.sort(
+    (a, b) => {
+
+      const distanceA =
+        Math.abs(
+          a.x - player.x
+        ) +
+        Math.abs(
+          a.y - player.y
+        );
+
+
+      const distanceB =
+        Math.abs(
+          b.x - player.x
+        ) +
+        Math.abs(
+          b.y - player.y
+        );
+
+
+      return (
+        distanceA -
+        distanceB
+      );
+
+    }
   );
 
-  if (moves.length === 0) return;
+
+  let chosen;
 
 
-  // Find closest move to player
-  moves.sort((a, b) => {
+  if (
+    Math.random() < 0.18
+  ) {
 
-    const distanceA =
-      Math.abs(a.x - player.x) +
-      Math.abs(a.y - player.y);
-
-    const distanceB =
-      Math.abs(b.x - player.x) +
-      Math.abs(b.y - player.y);
-
-    return distanceA - distanceB;
-
-  });
-
-
-  // Occasionally make a random move
-  // so the chasers don't look too robotic
-  if (Math.random() < 0.2) {
-
-    const randomMove =
-      moves[Math.floor(Math.random() * moves.length)];
-
-    chaser.x = randomMove.x;
-    chaser.y = randomMove.y;
+    chosen =
+      moves[
+        Math.floor(
+          Math.random() *
+          moves.length
+        )
+      ];
 
   } else {
 
-    chaser.x = moves[0].x;
-    chaser.y = moves[0].y;
+    chosen =
+      moves[0];
 
   }
 
+
+  chaser.x =
+    chosen.x;
+
+  chaser.y =
+    chosen.y;
+
+
   checkChaserCollision();
+
 }
 
 
@@ -551,13 +774,21 @@ function checkChaserCollision() {
 
   for (const chaser of chasers) {
 
-    if (samePosition(player, chaser)) {
+    if (
+      chaser.x === player.x &&
+      chaser.y === player.y
+    ) {
 
-      loseLife();
+      loseLife(
+        chaser.name
+      );
+
       return;
 
     }
+
   }
+
 }
 
 
@@ -565,33 +796,153 @@ function checkChaserCollision() {
    LOSE LIFE
 ========================= */
 
-function loseLife() {
+function loseLife(reason) {
 
   if (!gameRunning) return;
+
+
+  gameRunning = false;
 
   lives--;
 
   updateHUD();
 
 
-  if (lives <= 0) {
+  if (reason === "mine") {
 
-    gameOver();
+    lastChaserName =
+      "ranjau";
 
-    return;
+  } else {
+
+    lastChaserName =
+      capitalize(reason);
 
   }
 
 
-  // Respawn
+  showDeathPopup();
+
+
+  // Respawn data
+
   player.x = 1;
   player.y = 1;
 
   player.nextX = 1;
   player.nextY = 1;
 
+}
+
+
+/* =========================
+   DEATH POPUP
+========================= */
+
+function showDeathPopup() {
+
+  const overlay =
+    document.getElementById(
+      "deathOverlay"
+    );
+
+
+  const message =
+    document.getElementById(
+      "deathMessage"
+    );
+
+
+  if (
+    lastChaserName ===
+    "ranjau"
+  ) {
+
+    message.textContent =
+      "Kamu gagal melarikan diri dan kena ranjau! 💣";
+
+  } else {
+
+    message.textContent =
+      `Kamu gagal melarikan diri dan digigit ${lastChaserName}! 😭`;
+
+  }
+
+
+  document.getElementById(
+    "finalScore"
+  ).textContent =
+    score;
+
+
+  document.getElementById(
+    "finalLevel"
+  ).textContent =
+    level;
+
+
+  const againBtn =
+    document.getElementById(
+      "againBtn"
+    );
+
+
+  if (lives > 0) {
+
+    againBtn.textContent =
+      `LANJUT LARI (${lives} ❤️)`;
+
+  } else {
+
+    againBtn.textContent =
+      "COBA LAGI ✦";
+
+  }
+
+
+  overlay.classList.remove(
+    "hidden"
+  );
+
+}
+
+
+/* =========================
+   CONTINUE
+========================= */
+
+function continueGame() {
+
+  document
+    .getElementById(
+      "deathOverlay"
+    )
+    .classList.add(
+      "hidden"
+    );
+
+
+  if (lives <= 0) {
+
+    endGame();
+
+    return;
+
+  }
+
 
   createChasers();
+
+
+  gameRunning = true;
+
+  lastTime =
+    performance.now();
+
+
+  requestAnimationFrame(
+    gameLoop
+  );
 
 }
 
@@ -610,6 +961,7 @@ function nextLevel() {
 
   }
 
+
   level++;
 
   score += 100;
@@ -625,14 +977,27 @@ function nextLevel() {
 
 function updateHUD() {
 
-  document.getElementById("levelText").textContent =
+  document.getElementById(
+    "levelText"
+  ).textContent =
     level;
 
-  document.getElementById("scoreText").textContent =
+
+  document.getElementById(
+    "scoreText"
+  ).textContent =
     score;
 
-  document.getElementById("livesText").textContent =
-    lives;
+
+  document.getElementById(
+    "livesText"
+  ).textContent =
+    "❤️".repeat(
+      Math.max(
+        0,
+        lives
+      )
+    );
 
 }
 
@@ -652,7 +1017,9 @@ function draw() {
 
 
   // Background
-  ctx.fillStyle = "#dff7ff";
+
+  ctx.fillStyle =
+    "#F2CFBB";
 
   ctx.fillRect(
     0,
@@ -662,47 +1029,75 @@ function draw() {
   );
 
 
-  // Maze walls
-  for (let y = 0; y < SIZE; y++) {
+  // Maze
 
-    for (let x = 0; x < SIZE; x++) {
+  for (
+    let y = 0;
+    y < SIZE;
+    y++
+  ) {
 
-      if (maze[y][x] === 1) {
+    for (
+      let x = 0;
+      x < SIZE;
+      x++
+    ) {
 
-        ctx.fillStyle = "#bca9ff";
+      if (
+        maze[y][x] !== 1
+      ) continue;
 
-        ctx.beginPath();
 
-        ctx.roundRect(
-          x * TILE + 3,
-          y * TILE + 3,
-          TILE - 6,
-          TILE - 6,
-          10
-        );
+      ctx.fillStyle =
+        "#8E9546";
 
-        ctx.fill();
 
-      }
+      ctx.beginPath();
+
+
+      ctx.roundRect(
+        x * TILE + 3,
+        y * TILE + 3,
+        TILE - 6,
+        TILE - 6,
+        9
+      );
+
+
+      ctx.fill();
 
     }
+
   }
 
 
   // Pellets
-  for (const pellet of pellets) {
 
-    ctx.fillStyle = "#fff1a6";
+  for (
+    const pellet of pellets
+  ) {
+
+    ctx.fillStyle =
+      "#E9E29B";
+
 
     ctx.beginPath();
 
+
     ctx.arc(
-      pellet.x * TILE + TILE / 2,
-      pellet.y * TILE + TILE / 2,
+      pellet.x * TILE +
+        TILE / 2,
+
+      pellet.y * TILE +
+        TILE / 2,
+
       5,
+
       0,
+
       Math.PI * 2
     );
+
 
     ctx.fill();
 
@@ -710,23 +1105,39 @@ function draw() {
 
 
   // Mines
-  for (const mine of mines) {
 
-    ctx.font = "24px Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+  for (
+    const mine of mines
+  ) {
+
+    ctx.font =
+      "23px Arial";
+
+    ctx.textAlign =
+      "center";
+
+    ctx.textBaseline =
+      "middle";
+
 
     ctx.fillText(
       "💣",
-      mine.x * TILE + TILE / 2,
-      mine.y * TILE + TILE / 2
+
+      mine.x * TILE +
+        TILE / 2,
+
+      mine.y * TILE +
+        TILE / 2
     );
 
   }
 
 
   // Chasers
-  for (const chaser of chasers) {
+
+  for (
+    const chaser of chasers
+  ) {
 
     drawCharacter(
       chaser.image,
@@ -739,6 +1150,7 @@ function draw() {
 
 
   // Player
+
   drawCharacter(
     playerImage,
     player.x,
@@ -749,35 +1161,67 @@ function draw() {
 }
 
 
-function drawCharacter(image, x, y, size) {
+/* =========================
+   CHARACTER DRAW
+========================= */
 
-  if (image.complete && image.naturalWidth > 0) {
+function drawCharacter(
+  image,
+  x,
+  y,
+  size
+) {
+
+  if (
+    image.complete &&
+    image.naturalWidth > 0
+  ) {
 
     ctx.drawImage(
+
       image,
-      x * TILE + (TILE - size) / 2,
-      y * TILE + (TILE - size) / 2,
+
+      x * TILE +
+        (TILE - size) / 2,
+
+      y * TILE +
+        (TILE - size) / 2,
+
       size,
       size
+
     );
 
   } else {
 
-    ctx.fillStyle = "#ff9fc7";
+    ctx.fillStyle =
+      "#F28892";
+
 
     ctx.beginPath();
 
+
     ctx.arc(
-      x * TILE + TILE / 2,
-      y * TILE + TILE / 2,
+
+      x * TILE +
+        TILE / 2,
+
+      y * TILE +
+        TILE / 2,
+
       size / 2,
+
       0,
+
       Math.PI * 2
+
     );
+
 
     ctx.fill();
 
   }
+
 }
 
 
@@ -785,50 +1229,75 @@ function drawCharacter(image, x, y, size) {
    GAME LOOP
 ========================= */
 
-function gameLoop(timestamp) {
+function gameLoop(
+  timestamp
+) {
 
-  if (!gameRunning) return;
+  if (!gameRunning)
+    return;
 
 
   const delta =
-    timestamp - lastTime;
-
-  lastTime = timestamp;
-
-
-  playerMoveTimer += delta;
-  chaserMoveTimer += delta;
+    timestamp -
+    lastTime;
 
 
-  if (playerMoveTimer > 130) {
+  lastTime =
+    timestamp;
+
+
+  playerTimer +=
+    delta;
+
+  chaserTimer +=
+    delta;
+
+
+  if (
+    playerTimer >= 130
+  ) {
 
     movePlayer();
 
-    playerMoveTimer = 0;
+    playerTimer = 0;
 
   }
 
 
-  const chaserSpeed =
-    levelSettings[level].speed;
+  const speed =
+    levelSettings[
+      level
+    ].speed;
 
 
-  if (chaserMoveTimer > chaserSpeed) {
+  if (
+    chaserTimer >= speed
+  ) {
 
-    for (const chaser of chasers) {
+    for (
+      const chaser of chasers
+    ) {
 
-      moveChaser(chaser);
+      moveChaser(
+        chaser
+      );
+
+      if (!gameRunning)
+        break;
 
     }
 
-    chaserMoveTimer = 0;
+    chaserTimer = 0;
 
   }
 
 
   draw();
 
-  requestAnimationFrame(gameLoop);
+
+  requestAnimationFrame(
+    gameLoop
+  );
 
 }
 
@@ -840,66 +1309,113 @@ function gameLoop(timestamp) {
 function startGame() {
 
   level = 1;
+
   score = 0;
+
   lives = 3;
+
 
   gameRunning = true;
 
-  document
-    .getElementById("homeScreen")
-    .classList.add("hidden");
 
   document
-    .getElementById("endScreen")
-    .classList.add("hidden");
+    .getElementById(
+      "nameScreen"
+    )
+    .classList.add(
+      "hidden"
+    );
+
 
   document
-    .getElementById("gameScreen")
-    .classList.remove("hidden");
+    .getElementById(
+      "homeScreen"
+    )
+    .classList.add(
+      "hidden"
+    );
+
+
+  document
+    .getElementById(
+      "gameScreen"
+    )
+    .classList.remove(
+      "hidden"
+    );
+
+
+  document
+    .getElementById(
+      "deathOverlay"
+    )
+    .classList.add(
+      "hidden"
+    );
+
+
+  document
+    .getElementById(
+      "winOverlay"
+    )
+    .classList.add(
+      "hidden"
+    );
 
 
   startLevel();
 
-  lastTime = performance.now();
 
-  requestAnimationFrame(gameLoop);
+  lastTime =
+    performance.now();
+
+
+  requestAnimationFrame(
+    gameLoop
+  );
 
 }
 
 
 /* =========================
-   GAME OVER
+   END GAME
 ========================= */
 
-function gameOver() {
+function endGame() {
 
   gameRunning = false;
 
   saveRank();
 
-  document
-    .getElementById("gameScreen")
-    .classList.add("hidden");
 
   document
-    .getElementById("endScreen")
-    .classList.remove("hidden");
+    .getElementById(
+      "deathOverlay"
+    )
+    .classList.add(
+      "hidden"
+    );
 
 
-  document.getElementById("endTitle").textContent =
-    "GAME OVER!";
+  document
+    .getElementById(
+      "gameScreen"
+    )
+    .classList.add(
+      "hidden"
+    );
 
-  document.getElementById("endMessage").textContent =
-    "You got bitten. 😭";
 
-  document.getElementById("finalScore").textContent =
-    score;
+  document
+    .getElementById(
+      "homeScreen"
+    )
+    .classList.remove(
+      "hidden"
+    );
 
-  document.getElementById("finalLevel").textContent =
-    level;
 
-  document.getElementById("finalRank").textContent =
-    getRank(score);
+  displayRanks();
 
 }
 
@@ -916,28 +1432,34 @@ function winGame() {
 
   saveRank();
 
-  document
-    .getElementById("gameScreen")
-    .classList.add("hidden");
 
   document
-    .getElementById("endScreen")
-    .classList.remove("hidden");
+    .getElementById(
+      "gameScreen"
+    )
+    .classList.add(
+      "hidden"
+    );
 
 
-  document.getElementById("endTitle").textContent =
-    "YOU ESCAPED! 🎉";
+  document
+    .getElementById(
+      "winOverlay"
+    )
+    .classList.remove(
+      "hidden"
+    );
 
-  document.getElementById("endMessage").textContent =
-    "You survived all 7 levels!";
 
-  document.getElementById("finalScore").textContent =
+  document.getElementById(
+    "winScore"
+  ).textContent =
     score;
 
-  document.getElementById("finalLevel").textContent =
-    "7";
 
-  document.getElementById("finalRank").textContent =
+  document.getElementById(
+    "winRank"
+  ).textContent =
     getRank(score);
 
 }
@@ -950,7 +1472,9 @@ function winGame() {
 function getRanks() {
 
   return JSON.parse(
-    localStorage.getItem("lskdRanks") || "[]"
+    localStorage.getItem(
+      "lskdRanks"
+    ) || "[]"
   );
 
 }
@@ -958,16 +1482,37 @@ function getRanks() {
 
 function saveRank() {
 
-  const ranks = getRanks();
+  const ranks =
+    getRanks();
 
-  ranks.push(score);
 
-  ranks.sort((a, b) => b - a);
+  ranks.push({
+
+    name:
+      playerName,
+
+    score:
+      score
+
+  });
+
+
+  ranks.sort(
+    (a, b) =>
+      b.score - a.score
+  );
+
 
   localStorage.setItem(
+
     "lskdRanks",
-    JSON.stringify(ranks.slice(0, 5))
+
+    JSON.stringify(
+      ranks.slice(0, 5)
+    )
+
   );
+
 
   displayRanks();
 
@@ -976,17 +1521,28 @@ function saveRank() {
 
 function getRank(currentScore) {
 
-  const ranks = getRanks();
+  const ranks =
+    getRanks();
+
 
   let position = 1;
 
-  for (const value of ranks) {
 
-    if (currentScore < value) {
+  for (
+    const rank of ranks
+  ) {
+
+    if (
+      currentScore <
+      rank.score
+    ) {
+
       position++;
+
     }
 
   }
+
 
   return "#" + position;
 
@@ -996,18 +1552,31 @@ function getRank(currentScore) {
 function displayRanks() {
 
   const rankList =
-    document.getElementById("rankList");
+    document.getElementById(
+      "rankList"
+    );
 
-  const ranks = getRanks();
+
+  const ranks =
+    getRanks();
 
 
-  if (ranks.length === 0) {
+  if (
+    ranks.length === 0
+  ) {
 
     rankList.innerHTML = `
+
       <div class="rank-row">
-        <span>🥇 No scores yet</span>
+
+        <span>
+          🥇 Belum ada yang lari
+        </span>
+
         <span>—</span>
+
       </div>
+
     `;
 
     return;
@@ -1015,22 +1584,156 @@ function displayRanks() {
   }
 
 
-  const medals = ["🥇", "🥈", "🥉", "🏅", "🏅"];
+  const medals = [
+    "🥇",
+    "🥈",
+    "🥉",
+    "🏅",
+    "🏅"
+  ];
 
-  rankList.innerHTML = ranks
-    .map((value, index) => {
 
-      return `
-        <div class="rank-row">
-          <span>${medals[index]} Player ${index + 1}</span>
-          <strong>${value}</strong>
-        </div>
-      `;
+  rankList.innerHTML =
+    ranks
+      .map(
+        (rank, index) => `
 
-    })
-    .join("");
+          <div class="rank-row">
+
+            <span>
+              ${medals[index]}
+              ${escapeHTML(rank.name)}
+            </span>
+
+            <strong>
+              ${rank.score}
+            </strong>
+
+          </div>
+
+        `
+      )
+      .join("");
 
 }
+
+
+/* =========================
+   SWIPE CONTROL
+========================= */
+
+let touchStartX = 0;
+let touchStartY = 0;
+
+
+gameArea.addEventListener(
+  "touchstart",
+  event => {
+
+    const touch =
+      event.touches[0];
+
+
+    touchStartX =
+      touch.clientX;
+
+    touchStartY =
+      touch.clientY;
+
+  },
+  {
+    passive: true
+  }
+);
+
+
+gameArea.addEventListener(
+  "touchmove",
+  event => {
+
+    event.preventDefault();
+
+  },
+  {
+    passive: false
+  }
+);
+
+
+gameArea.addEventListener(
+  "touchend",
+  event => {
+
+    const touch =
+      event.changedTouches[0];
+
+
+    const dx =
+      touch.clientX -
+      touchStartX;
+
+
+    const dy =
+      touch.clientY -
+      touchStartY;
+
+
+    const distance =
+      Math.sqrt(
+        dx * dx +
+        dy * dy
+      );
+
+
+    // Ignore tiny taps
+
+    if (
+      distance < 25
+    ) return;
+
+
+    if (
+      Math.abs(dx) >
+      Math.abs(dy)
+    ) {
+
+      if (dx > 0) {
+
+        setDirection(
+          "right"
+        );
+
+      } else {
+
+        setDirection(
+          "left"
+        );
+
+      }
+
+    } else {
+
+      if (dy > 0) {
+
+        setDirection(
+          "down"
+        );
+
+      } else {
+
+        setDirection(
+          "up"
+        );
+
+      }
+
+    }
+
+  },
+  {
+    passive: true
+  }
+);
 
 
 /* =========================
@@ -1044,29 +1747,34 @@ document.addEventListener(
     const keys = {
 
       ArrowUp: "up",
+      ArrowDown: "down",
+      ArrowLeft: "left",
+      ArrowRight: "right",
+
       w: "up",
       W: "up",
 
-      ArrowDown: "down",
       s: "down",
       S: "down",
 
-      ArrowLeft: "left",
       a: "left",
       A: "left",
 
-      ArrowRight: "right",
       d: "right",
       D: "right"
 
     };
 
 
-    if (keys[event.key]) {
+    if (
+      keys[event.key]
+    ) {
 
       event.preventDefault();
 
-      setDirection(keys[event.key]);
+      setDirection(
+        keys[event.key]
+      );
 
     }
 
@@ -1075,33 +1783,49 @@ document.addEventListener(
 
 
 /* =========================
-   MOBILE BUTTONS
-========================= */
-
-document
-  .querySelectorAll("[data-dir]")
-  .forEach(button => {
-
-    button.addEventListener(
-      "click",
-      () => {
-
-        setDirection(
-          button.dataset.dir
-        );
-
-      }
-    );
-
-  });
-
-
-/* =========================
    BUTTONS
 ========================= */
 
 document
-  .getElementById("playBtn")
+  .getElementById(
+    "startBtn"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      if (
+        getName()
+      ) {
+
+        document
+          .getElementById(
+            "nameScreen"
+          )
+          .classList.add(
+            "hidden"
+          );
+
+        document
+          .getElementById(
+            "homeScreen"
+          )
+          .classList.remove(
+            "hidden"
+          );
+
+        displayRanks();
+
+      }
+
+    }
+  );
+
+
+document
+  .getElementById(
+    "playBtn"
+  )
   .addEventListener(
     "click",
     startGame
@@ -1109,26 +1833,49 @@ document
 
 
 document
-  .getElementById("againBtn")
+  .getElementById(
+    "againBtn"
+  )
   .addEventListener(
     "click",
-    startGame
+    continueGame
   );
 
 
 document
-  .getElementById("homeBtn")
+  .getElementById(
+    "homeBtn"
+  )
   .addEventListener(
     "click",
     () => {
 
       document
-        .getElementById("endScreen")
-        .classList.add("hidden");
+        .getElementById(
+          "deathOverlay"
+        )
+        .classList.add(
+          "hidden"
+        );
+
 
       document
-        .getElementById("homeScreen")
-        .classList.remove("hidden");
+        .getElementById(
+          "gameScreen"
+        )
+        .classList.add(
+          "hidden"
+        );
+
+
+      document
+        .getElementById(
+          "homeScreen"
+        )
+        .classList.remove(
+          "hidden"
+        );
+
 
       displayRanks();
 
@@ -1136,5 +1883,79 @@ document
   );
 
 
-/* Initial billboard */
+document
+  .getElementById(
+    "winAgainBtn"
+  )
+  .addEventListener(
+    "click",
+    startGame
+  );
+
+
+/* =========================
+   HELPER
+========================= */
+
+function capitalize(text) {
+
+  return (
+    text.charAt(0).toUpperCase() +
+    text.slice(1)
+  );
+
+}
+
+
+function escapeHTML(text) {
+
+  return text
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
+
+}
+
+
+/* =========================
+   LOAD SAVED NAME
+========================= */
+
+const savedName =
+  localStorage.getItem(
+    "lskdPlayerName"
+  );
+
+
+if (savedName) {
+
+  document.getElementById(
+    "playerName"
+  ).value =
+    savedName;
+
+}
+
+
+/* =========================
+   INITIAL RANK
+========================= */
+
 displayRanks();
