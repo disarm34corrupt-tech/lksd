@@ -1241,14 +1241,29 @@ function winGame() {
 /* =====================================================
    RANK
 ===================================================== */
+let firebaseRanks = [];
 
 function getRanks() {
+  return firebaseRanks;
+}
 
-  return JSON.parse(
-    localStorage.getItem(
-      "lskdRanks"
-    ) || "[]"
+function loadRanks() {
+
+  const q = query(
+    collection(db, "Players"),
+    orderBy("score", "desc"),
+    limit(5)
   );
+
+  onSnapshot(q, snapshot => {
+
+    firebaseRanks = snapshot.docs.map(
+      doc => doc.data()
+    );
+
+    displayRanks();
+
+  });
 }
 
 async function saveRank() {
@@ -1649,4 +1664,4 @@ if (savedName) {
    INITIAL
 ===================================================== */
 
-displayRanks();
+loadRanks();
