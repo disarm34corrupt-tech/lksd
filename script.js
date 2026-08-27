@@ -1,3 +1,26 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  limit,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDwXe1N_-VEBHoWzph5suGOiCiQR9kV6Mg",
+  authDomain: "lksd-3f39f.firebaseapp.com",
+  projectId: "lksd-3f39f",
+  storageBucket: "lksd-3f39f.firebasestorage.app",
+  messagingSenderId: "994524156071",
+  appId: "1:994524156071:web:ba59a04cef48360e42cb82"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const gameArea = document.getElementById("gameArea");
