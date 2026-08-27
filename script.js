@@ -1251,32 +1251,28 @@ function getRanks() {
   );
 }
 
+async function saveRank() {
 
-function saveRank() {
+  try {
 
-  const ranks = getRanks();
+    await addDoc(
+      collection(db, "Players"),
+      {
+        name: playerName,
+        score: score
+      }
+    );
 
-  ranks.push({
-    name: playerName,
-    score: score
-  });
+    console.log("Score berhasil disimpan ke Firebase!");
 
+  } catch (error) {
 
-  ranks.sort(
-    (a, b) =>
-      b.score - a.score
-  );
+    console.error(
+      "Gagal menyimpan score:",
+      error
+    );
 
-
-  localStorage.setItem(
-    "lskdRanks",
-    JSON.stringify(
-      ranks.slice(0, 5)
-    )
-  );
-
-
-  displayRanks();
+  }
 }
 
 
